@@ -23,7 +23,6 @@ public class AppSettings {
     private String propFilePath = "";
     private final String propFileName = "config.properties";
     
-    private MyLog myLog = Application.myLog;
     private Application myApp = null;
     
     public AppSettings(Application app){
@@ -31,75 +30,79 @@ public class AppSettings {
             myApp = app;
             propFilePath = new File(".").getCanonicalPath() + "\\";
         } catch (IOException ex) {
-            myLog.logEvent("Nevarēju noteikt config faila ceļu!");
-            if (myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);            
+            MyLog.logEvent("Nevarēju noteikt config faila ceļu!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);            
         }
     }
     
     private void createConfigFile() {
         try {
-            myLog.logEvent("Izveidojam jaunu config failu:\n"
+            MyLog.logEvent("Izveidojam jaunu config failu:\n"
                     + propFilePath+propFileName);
             new File(propFilePath + propFileName).createNewFile();
-            myLog.logEvent("Config fails izveidots!");
+            MyLog.logEvent("Config fails izveidots!");
         } catch (IOException ex) {
-            myLog.logEvent("Nevar izveidot failu!");
-            if (myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);
+            MyLog.logEvent("Nevar izveidot failu!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);
         }
     }
     
     public void getPropValues()  {
         InputStream inputStream = null;
         try {
-            myLog.logEvent("Meklējam config failu...");
+            MyLog.logEvent("Meklējam config failu...");
             inputStream = new FileInputStream(propFilePath + propFileName);
-            myLog.logEvent("Config fails atrasts!");
+            MyLog.logEvent("Config fails atrasts!");
+            MyLog.logEvent(propFilePath + propFileName);
             
             Properties prop = new Properties();
 
-            myLog.logEvent("Sākam config faila ielādi...");
+            MyLog.logEvent("Sākam config faila ielādi...");
             prop.load(inputStream);
-            myLog.logEvent("Config fails ielādēts!");
+            MyLog.logEvent("Config fails ielādēts!");
 
-            myLog.logEvent("Sākam vērtību izgūšanu no faila..");
+            MyLog.logEvent("Sākam vērtību uzstādīšanu no faila..");
             myApp.setInnerAdapterTextField(prop.getProperty("innerAdapterName"));
             myApp.setOuterAdapterTextField(prop.getProperty("outerAdapterName"));
             myApp.setLogErrorStackTrace(prop.getProperty("logErrorStackTrace"));
             myApp.setLogCommands(prop.getProperty("logCommands"));
             myApp.setLogColor(prop.getProperty("logColor"));
             myApp.setLogAdapter(prop.getProperty("logAdapter"));
-            myLog.logEvent("Vērtību izgūšanu no faila pabeigta!");
+            myApp.setAutoProxy(prop.getProperty("autoProxy"));
+            MyLog.logEvent("Vērtību uzstādīšanu pabeigta!");
         } catch (FileNotFoundException ex) {
-            myLog.logEvent("Config fails nav atrasts!");
-            if (myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);
+            MyLog.logEvent("Config fails nav atrasts!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);
             createConfigFile();
         } catch (Exception ex) {
-            myLog.logEvent("Nevarēja ielādēt config failu!");
-            if (myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);
+            MyLog.logEvent("Nevarēja ielādēt config failu!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);
         } finally {
             if(inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    myLog.logEvent("Nevarēja aizvērt config failu!");
-                    if (myApp.getLogStackTraceCheckBox().isSelected())
-                        myLog.logError(ex);
+                    MyLog.logEvent("Nevarēja aizvērt config failu!");
+                    if (myApp.canLogErrorStackTrace())
+                        MyLog.logError(ex);
                 }
             }
         }
     }
     
     public void setPropValues() {
+        MyLog.logEvent("Config faila saglabāšana ...");
+        
         OutputStream output = null;
         try {
             Properties prop = new Properties();
             output = new FileOutputStream(propFilePath + propFileName);
 
-            myLog.logEvent("Sākam vērtību ievietošanu config failā..");
+            MyLog.logEvent("Sākam vērtību ievietošanu config failā..");
             
             prop.setProperty("innerAdapterName", (
                     (myApp.getInnerAdapterTextField().isEmpty()) ? 
@@ -112,32 +115,34 @@ public class AppSettings {
                             myApp.getOuterAdapterTextField()
                     ));
             prop.setProperty("logErrorStackTrace",String.valueOf(
-                    myApp.isLogErrorStackTrace()));
+                    myApp.canLogErrorStackTrace()));
             prop.setProperty("logCommands",String.valueOf(
-                    myApp.isLogCommands()));
+                    myApp.canLogCommands()));
             prop.setProperty("logColor",String.valueOf(
-                    myApp.isLogColor()));
+                    myApp.canLogColor()));
             prop.setProperty("logAdapter",String.valueOf(
-                    myApp.isLogAdapter()));
+                    myApp.canLogAdapter()));
+            prop.setProperty("autoProxy",String.valueOf(
+                    myApp.canLogAutoProxy()));
             
             prop.store(output, null);
-            myLog.logEvent("Config fails veiksmīgi saglabāts!");
+            MyLog.logEvent("Config fails veiksmīgi saglabāts!");
         } catch (FileNotFoundException ex) {
-            myLog.logEvent("Nevarēja atrast failu!");
-            if(myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);
+            MyLog.logEvent("Nevarēja atrast failu!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);
         } catch (IOException ex) {
-            myLog.logEvent("Radās problēmas saglabājot failu!");
-            if(myApp.getLogStackTraceCheckBox().isSelected())
-                myLog.logError(ex);
+            MyLog.logEvent("Radās problēmas saglabājot failu!");
+            if (myApp.canLogErrorStackTrace())
+                MyLog.logError(ex);
         } finally {
             if (output != null) {
                 try {
                     output.close();
                 } catch (IOException ex) {
-                    myLog.logEvent("Nevarēja aizvērt config failu!");
-                    if(myApp.getLogStackTraceCheckBox().isSelected())
-                        myLog.logError(ex);
+                    MyLog.logEvent("Nevarēja aizvērt config failu!");
+                    if (myApp.canLogErrorStackTrace())
+                        MyLog.logError(ex);
                 }
             }
         }

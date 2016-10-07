@@ -8,7 +8,6 @@ package application;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.JCheckBox;
 import javax.swing.JTextArea;
 
 /**
@@ -21,33 +20,30 @@ public final class MyLog {
             setLogTextArea(txtArea);
         }
 
-        private JTextArea logTextArea;   
-        private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+        private static JTextArea logTextArea;   
+        private static final DateFormat dateFormat = 
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-        public JTextArea getLogTextArea() {
-            return logTextArea;
+        public static void setLogTextArea(JTextArea logTextArea) {
+            MyLog.logTextArea = logTextArea;
         }
 
-        public void setLogTextArea(JTextArea logTextArea) {
-            this.logTextArea = logTextArea;
+        public static void logEvent(String message) {
+            MyLog.logTextArea.append("[" + getDate() + "] " + message + "\n");
         }
 
-        public void logEvent(String message) {
-            getLogTextArea().append("[" + getDate() + "] " + message + "\n");
-        }
-
-        public void logError(Exception ex) {
-            getLogTextArea().append("[" + getDate() + "] " + ex.getMessage() + "\n");
+        public static void logError(Exception ex) {
+            MyLog.logTextArea.append("[" + getDate() + "] " + ex.getMessage() + "\n");
             for (StackTraceElement error : ex.getStackTrace()) {
-                getLogTextArea().append("\t" + error.toString() + "\n");
+                MyLog.logTextArea.append("\t" + error.toString() + "\n");
             }
         }
 
-        private String getDate() {
+        private static String getDate() {
             return dateFormat.format(new Date());
         }
 
-        public void testLogEvent(){
+        public static void testLogEvent(){
             logEvent("Test");
         }
     }

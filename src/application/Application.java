@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.PlainDocument;
 
@@ -67,6 +66,11 @@ public class Application extends javax.swing.JFrame {
         proxyStatusLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 
         setButtonColors();
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Application.class.getName()).log(Level.SEVERE, null, ex);
+        }
         setAdapters();
         runRefresher();
         
@@ -81,7 +85,7 @@ public class Application extends javax.swing.JFrame {
 //        try {
 //            execCmdN("mstsc /v:10.219.4.218 /admin /f");
 //        } catch (IOException ex) {
-//            myLog.logError(ex);
+//            MyLog.logError(ex);
 //        }        
     
     
@@ -90,11 +94,7 @@ public class Application extends javax.swing.JFrame {
 //    }
     
     
-    //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">
-    public JCheckBox getLogStackTraceCheckBox() {
-        return this.logErrorStackTrace;
-    }
-    
+    //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">    
     private String getInternalAdapterIndex(){
         return internalJTextField.getText();
     }
@@ -111,20 +111,24 @@ public class Application extends javax.swing.JFrame {
         return outerAdapterNameTextField.getText();
     }
     
-    public boolean isLogErrorStackTrace(){
+    public boolean canLogErrorStackTrace(){
         return logErrorStackTrace.isSelected();
     }
     
-    public boolean isLogCommands(){
+    public boolean canLogCommands(){
         return logCommands.isSelected();
     }
     
-    public boolean isLogAdapter(){
+    public boolean canLogAdapter(){
         return logAdapter.isSelected();
     }
     
-    public boolean isLogColor(){
+    public boolean canLogColor(){
         return logColor.isSelected();
+    }
+    
+    public boolean canLogAutoProxy(){
+        return autoProxyCheckBox.isSelected();
     }
     
     public boolean isInnerAdapterEnabled() {
@@ -179,22 +183,26 @@ public class Application extends javax.swing.JFrame {
     protected void setLogAdapter(String status) {
         this.logAdapter.setSelected(Boolean.valueOf(status));
     }
+    
+    protected void setAutoProxy(String status) {
+        this.autoProxyCheckBox.setSelected(Boolean.valueOf(status));
+    }
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="BUTTON COLORS">
     private void setButtonColors(){
         if (logColor.isSelected())
-            myLog.logEvent("COLOR: Pogu krāsu uzstādīšana...");
+            MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana...");
         setInnerButtonColor();
         setOuterButtonColor();
         setProxyButtonColor();
         if (logColor.isSelected())
-            myLog.logEvent("COLOR: Pogu krāsu uzstādīšana pabeigta!");
+            MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana pabeigta!");
     }
     
     // Uzseto krasu INNER tīkla pogai
     private void setInnerButtonColor(){
-//        myLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
         if(isInnerAdapterEnabled()){
             internalConButton.setForeground(Color.GREEN);
         } else {
@@ -203,7 +211,7 @@ public class Application extends javax.swing.JFrame {
     }
     // Uzseto krasu INNER tīkla pogai
     private void setInnerButtonColor(boolean isButtonPressed){
-//        myLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
         if(isButtonPressed){
             internalConButton.setForeground(Color.GREEN);
         } else {
@@ -213,7 +221,7 @@ public class Application extends javax.swing.JFrame {
     
     // Uzseto krasu OUTER tīkla pogai
     private void setOuterButtonColor(){
-//        myLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
         if(isOuterAdapterEnabled()){
             outerConButton.setForeground(Color.GREEN);
         } else {
@@ -222,7 +230,7 @@ public class Application extends javax.swing.JFrame {
     }
     // Uzseto krasu OUTER tīkla pogai
     private void setOuterButtonColor(boolean isButtonPressed){
-//        myLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
         if(isButtonPressed){
             outerConButton.setForeground(Color.GREEN);
         } else {
@@ -232,7 +240,7 @@ public class Application extends javax.swing.JFrame {
     
     // Uzseto krasu PROXY tīkla pogai
     private void setProxyButtonColor(){
-//        myLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
         if(isProxyEnabled()){
             proxyButton.setForeground(Color.GREEN);
         } else {
@@ -241,7 +249,7 @@ public class Application extends javax.swing.JFrame {
     }
     // Uzseto krasu PROXY tīkla pogai
     private void setProxyButtonColor(boolean isButtonPressed){
-//        myLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
+//        MyLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
         if(isButtonPressed){
             proxyButton.setForeground(Color.GREEN);
         } else {
@@ -265,8 +273,10 @@ public class Application extends javax.swing.JFrame {
     private void setAdapters(){
         try {
             if (logAdapter.isSelected())
-                myLog.logEvent("ADAPTER: Adapteru uzstādīšana...");
-            String[] cmdData = execCmd("wmic nic get name, index, NetConnectionID, netenabled").split("\n");
+                MyLog.logEvent("ADAPTER: Adapteru uzstādīšana...");
+            String[] cmdData = 
+                    execCmd("wmic nic get name, index, NetConnectionID, netenabled")
+                            .split("\n");
             ArrayList<String[]> tableData = new ArrayList<>();
             
             createArrayListFromCmd(cmdData, tableData);
@@ -282,15 +292,15 @@ public class Application extends javax.swing.JFrame {
                 outerJTextField.setText(data[0]);
             });
             if (logAdapter.isSelected())
-                myLog.logEvent("ADAPTER: Adapteru uzstādīšana pabeigta!");
+                MyLog.logEvent("ADAPTER: Adapteru uzstādīšana pabeigta!");
         } catch (IOException ex) {
-            myLog.logError(ex);
+            MyLog.logError(ex);
         }
     }
     
     // Izveido tabulu ar datiem no WMIC vaicājuma
     private void generateTable() {
-        myLog.logEvent("Atjauno tabulu...");
+        MyLog.logEvent("Atjauno tabulu...");
         try {
             String[] cmdData = execCmd("wmic nic get name, index, NetConnectionID, netenabled").split("\n");
             ArrayList<String[]> tableData = new ArrayList<>();
@@ -298,7 +308,50 @@ public class Application extends javax.swing.JFrame {
             createArrayListFromCmd(cmdData, tableData);
             setTableData(tableData); 
         } catch (IOException ex) {
-            myLog.logError(ex);
+            MyLog.logError(ex);
+        }
+    }
+    
+    private void doProxy() {
+        try {
+            // Ja ir ieslēgts proxy serveris
+            proxyStatusJProgressBar.setIndeterminate(true);
+            if (isProxyEnabled()) {
+                setProxyButtonColor(false);
+                MyLog.logEvent("PROXY: Izslēgt Proxy...");
+                String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
+                        + "\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable "
+                        + "/t REG_DWORD /d 0 /f";
+                if (logCommands.isSelected())
+                    MyLog.logEvent(cmd);
+                execCmd(cmd);
+//                MyLog.logEvent("PROXY: Ieslēgt Automatic Detect Settings...");
+//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
+//                        + "\\CurrentVersion\\Internet Settings\" /v "
+//                        + "AutoDetect /t REG_DWORD /d 1 /f";
+//                if (MyLog.canLogCommands())
+//                    MyLog.logEvent(cmd);
+//                execCmd(cmd);
+                // Ja ir izslēgts proxy serveris
+            } else {
+                setProxyButtonColor(true);
+                MyLog.logEvent("PROXY: Ieslēgt Proxy...");
+                String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
+                        + "\\Windows\\CurrentVersion\\Internet Settings\" "
+                        + "/v ProxyEnable /t REG_DWORD /d 1 /f";
+                if (logCommands.isSelected())
+                    MyLog.logEvent(cmd);
+                execCmd(cmd);
+//                MyLog.logEvent("PROXY: Izslēgt Automatic Detect Settings...");
+//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
+//                        + "\\CurrentVersion\\Internet Settings\" /v "
+//                        + "AutoDetect /t REG_DWORD /d 0 /f";
+//                if (MyLog.canLogCommands())
+//                    MyLog.logEvent(cmd);
+//                execCmd(cmd);
+            }
+        } catch (IOException ex) {
+            MyLog.logError(ex);
         }
     }
     
@@ -342,7 +395,7 @@ public class Application extends javax.swing.JFrame {
                             internalJProgressBar1.setIndeterminate(false);
                             internalJProgressBar1.setValue(100);
                             setInnerAdapterEnabled(true);
-                            myLog.logEvent("INNER: Iekšējais tīkls ieslēdzās..");
+                            MyLog.logEvent("INNER: Iekšējais tīkls ieslēdzās..");
                             generateTable();
                         }
                 return data;
@@ -355,7 +408,7 @@ public class Application extends javax.swing.JFrame {
                     internalJProgressBar1.setValue(0);
                     internalJProgressBar1.setIndeterminate(false);
                     setInnerAdapterEnabled(false);
-                    myLog.logEvent("INNER: Iekšējais tīkls izslēdzās..");
+                    MyLog.logEvent("INNER: Iekšējais tīkls izslēdzās..");
                     generateTable();
                 }
                 return data;
@@ -369,7 +422,7 @@ public class Application extends javax.swing.JFrame {
                     outerJProgressBar1.setValue(100);
                     outerJProgressBar1.setIndeterminate(false);
                     setOuterAdapterEnabled(true);
-                    myLog.logEvent("OUTER: Ārējais tīkls ieslēdzās..");
+                    MyLog.logEvent("OUTER: Ārējais tīkls ieslēdzās..");
                     generateTable();
                 }
                 
@@ -385,7 +438,7 @@ public class Application extends javax.swing.JFrame {
                 setOuterAdapterEnabled(false);
                 return _item;
             }).forEach((_item) -> {
-                myLog.logEvent("OUTER: Ārējais tīkls izslēdzās..");
+                MyLog.logEvent("OUTER: Ārējais tīkls izslēdzās..");
                 generateTable();
             });
             
@@ -393,12 +446,12 @@ public class Application extends javax.swing.JFrame {
             tableData.trimToSize();
             cmdData = null;
         } catch (IOException ex) {
-            myLog.logError(ex);
+            MyLog.logError(ex);
         }
     }
     
     private void runRefresher() {
-        myLog.logEvent("Refresher Started!");
+        MyLog.logEvent("Refresher Started!");
         
         ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
             exec.scheduleAtFixedRate(() -> {
@@ -412,7 +465,7 @@ public class Application extends javax.swing.JFrame {
                 Thread.sleep(1000);
 
             } catch (InterruptedException ex) {
-                myLog.logError(ex);
+                MyLog.logError(ex);
             }
               
             }, 0, 1, TimeUnit.SECONDS);
@@ -501,6 +554,7 @@ public class Application extends javax.swing.JFrame {
         outerConPanel = new javax.swing.JPanel();
         outerJTextField = new javax.swing.JTextField();
         outerAdapterNameTextField = new javax.swing.JTextField();
+        autoProxyCheckBox = new javax.swing.JCheckBox();
         logJPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         logJTextArea = new javax.swing.JTextArea();
@@ -702,6 +756,13 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        autoProxyCheckBox.setText("Auto Enable Proxy with Inner Connection");
+        autoProxyCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                autoProxyCheckBoxStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout settingsJPanelLayout = new javax.swing.GroupLayout(settingsJPanel);
         settingsJPanel.setLayout(settingsJPanelLayout);
         settingsJPanelLayout.setHorizontalGroup(
@@ -709,15 +770,17 @@ public class Application extends javax.swing.JFrame {
             .addGroup(settingsJPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(settingsJPanelLayout.createSequentialGroup()
-                        .addComponent(jButton2)
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, settingsJPanelLayout.createSequentialGroup()
                         .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(logPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(outerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(innerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())))
+                        .addContainerGap())
+                    .addGroup(settingsJPanelLayout.createSequentialGroup()
+                        .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(autoProxyCheckBox)
+                            .addComponent(jButton2))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         settingsJPanelLayout.setVerticalGroup(
             settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -728,7 +791,9 @@ public class Application extends javax.swing.JFrame {
                 .addComponent(outerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 362, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(autoProxyCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 321, Short.MAX_VALUE)
                 .addComponent(jButton2)
                 .addContainerGap())
         );
@@ -804,46 +869,7 @@ public class Application extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void proxyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_proxyButtonActionPerformed
-        try {
-            // Ja ir ieslēgts proxy serveris
-            proxyStatusJProgressBar.setIndeterminate(true);
-            if (isProxyEnabled()) {
-                setProxyButtonColor(false);
-                myLog.logEvent("PROXY: Izslēgt Proxy...");
-                String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
-                        + "\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable "
-                        + "/t REG_DWORD /d 0 /f";
-                if (logCommands.isSelected())
-                    myLog.logEvent(cmd);
-                execCmd(cmd);
-//                myLog.logEvent("PROXY: Ieslēgt Automatic Detect Settings...");
-//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
-//                        + "\\CurrentVersion\\Internet Settings\" /v "
-//                        + "AutoDetect /t REG_DWORD /d 1 /f";
-//                if (myLog.canLogCommands())
-//                    myLog.logEvent(cmd);
-//                execCmd(cmd);
-                // Ja ir izslēgts proxy serveris
-            } else {
-                setProxyButtonColor(true);
-                myLog.logEvent("PROXY: Ieslēgt Proxy...");
-                String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
-                        + "\\Windows\\CurrentVersion\\Internet Settings\" "
-                        + "/v ProxyEnable /t REG_DWORD /d 1 /f";
-                if (logCommands.isSelected())
-                    myLog.logEvent(cmd);
-                execCmd(cmd);
-//                myLog.logEvent("PROXY: Izslēgt Automatic Detect Settings...");
-//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
-//                        + "\\CurrentVersion\\Internet Settings\" /v "
-//                        + "AutoDetect /t REG_DWORD /d 0 /f";
-//                if (myLog.canLogCommands())
-//                    myLog.logEvent(cmd);
-//                execCmd(cmd);
-            }
-        } catch (IOException ex) {
-            myLog.logError(ex);
-        }
+        doProxy();
     }//GEN-LAST:event_proxyButtonActionPerformed
 
     private void outerConButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outerConButtonActionPerformed
@@ -854,26 +880,26 @@ public class Application extends javax.swing.JFrame {
                 try {
                     if(isOuterAdapterEnabled()) {
                         setOuterButtonColor(false);
-                        myLog.logEvent("OUTER: Ārējā adaptera izslēgšana ...");
+                        MyLog.logEvent("OUTER: Ārējā adaptera izslēgšana ...");
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call disable";
                         if (logCommands.isSelected())
-                            myLog.logEvent(cmd);
+                            MyLog.logEvent(cmd);
                         execCmd(cmd);
                     } else {
                         setOuterButtonColor(true);
-                        myLog.logEvent("OUTER: Ārējā adaptera startēšana ...");
+                        MyLog.logEvent("OUTER: Ārējā adaptera startēšana ...");
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call enable";
                         if (logCommands.isSelected())
-                            myLog.logEvent(cmd);
+                            MyLog.logEvent(cmd);
                         execCmd(cmd);
                     }
 
                 } catch (IOException ex) {
-                    myLog.logError(ex);
+                    MyLog.logError(ex);
                 }
             };
         }.start();
@@ -887,26 +913,29 @@ public class Application extends javax.swing.JFrame {
                 try {
                     if(isInnerAdapterEnabled()) {
                         setInnerButtonColor(false);
-                        myLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...");
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...");
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call disable";
                         if (logCommands.isSelected())
-                            myLog.logEvent(cmd);
+                            MyLog.logEvent(cmd);
                         execCmd(cmd);
                     } else {
                         setInnerButtonColor(true);
-                        myLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...");
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...");
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call enable";
                         if (logCommands.isSelected())
-                            myLog.logEvent(cmd);
+                            MyLog.logEvent(cmd);
                         execCmd(cmd);
                     }
+                    
+                    if(autoProxyCheckBox.isSelected())
+                        doProxy();
 
                 } catch (IOException ex) {
-                    myLog.logError(ex);
+                    MyLog.logError(ex);
                 }
             };
         }.start();
@@ -916,7 +945,7 @@ public class Application extends javax.swing.JFrame {
         try {
             execCmd("cmd /c start inetcpl.cpl");
         } catch (IOException ex) {
-            myLog.logError(ex);
+            MyLog.logError(ex);
         }
     }//GEN-LAST:event_proxyStatusLabelMouseClicked
 
@@ -930,6 +959,8 @@ public class Application extends javax.swing.JFrame {
             
         //execCmd("cmd /c start inner\\vzd.rdp");
         } catch (Exception ex) {
+            if(canLogErrorStackTrace())
+                MyLog.logError(ex);
             Logger.getLogger(Application.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jButton2ActionPerformed
@@ -937,6 +968,14 @@ public class Application extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         generateTable();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void autoProxyCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_autoProxyCheckBoxStateChanged
+        if(autoProxyCheckBox.isSelected()) {
+            proxyButton.setEnabled(false);
+        } else {
+            proxyButton.setEnabled(true);
+        }
+    }//GEN-LAST:event_autoProxyCheckBoxStateChanged
 
     /**
      * @param args the command line arguments
@@ -971,6 +1010,7 @@ public class Application extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable adapterJTable;
+    private javax.swing.JCheckBox autoProxyCheckBox;
     private javax.swing.JTextField innerAdapterNameTextField;
     private javax.swing.JPanel innerConPanel;
     private javax.swing.JButton internalConButton;

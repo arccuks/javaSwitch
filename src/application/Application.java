@@ -8,17 +8,14 @@ package application;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
-import javax.swing.JTextArea;
+import javax.swing.JCheckBox;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.PlainDocument;
 
@@ -48,6 +45,8 @@ public class Application extends javax.swing.JFrame {
         logCommands.setSelected(false);
         
         logPanel.setBorder(BorderFactory.createTitledBorder("Log Commands"));
+        innerConPanel.setBorder(BorderFactory.createTitledBorder("Inner Network Connection"));
+        outerConPanel.setBorder(BorderFactory.createTitledBorder("Outer Network Connection"));
         
         logJTextArea.setEditable(false);
         myLog = new MyLog(logJTextArea);
@@ -92,6 +91,10 @@ public class Application extends javax.swing.JFrame {
     
     
     //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">
+    public JCheckBox getLogStackTraceCheckBox() {
+        return this.logErrorStackTrace;
+    }
+    
     private String getInternalAdapterIndex(){
         return internalJTextField.getText();
     }
@@ -180,12 +183,12 @@ public class Application extends javax.swing.JFrame {
     
     //<editor-fold defaultstate="collapsed" desc="BUTTON COLORS">
     private void setButtonColors(){
-        if (myLog.canLogColor())
+        if (logColor.isSelected())
             myLog.logEvent("COLOR: Pogu krāsu uzstādīšana...");
         setInnerButtonColor();
         setOuterButtonColor();
         setProxyButtonColor();
-        if (myLog.canLogColor())
+        if (logColor.isSelected())
             myLog.logEvent("COLOR: Pogu krāsu uzstādīšana pabeigta!");
     }
     
@@ -261,7 +264,7 @@ public class Application extends javax.swing.JFrame {
     // Uzstādam sākuma adapterus
     private void setAdapters(){
         try {
-            if(myLog.canLogAdapter())
+            if (logAdapter.isSelected())
                 myLog.logEvent("ADAPTER: Adapteru uzstādīšana...");
             String[] cmdData = execCmd("wmic nic get name, index, NetConnectionID, netenabled").split("\n");
             ArrayList<String[]> tableData = new ArrayList<>();
@@ -278,7 +281,7 @@ public class Application extends javax.swing.JFrame {
             }).filter((data) -> (data.length > 2 && data[2].equals(outerAdapterConnection))).forEach((data) -> {
                 outerJTextField.setText(data[0]);
             });
-            if(myLog.canLogAdapter())
+            if (logAdapter.isSelected())
                 myLog.logEvent("ADAPTER: Adapteru uzstādīšana pabeigta!");
         } catch (IOException ex) {
             myLog.logError(ex);
@@ -465,59 +468,6 @@ public class Application extends javax.swing.JFrame {
         adapterJTable.getColumnModel().getColumn(3).setMaxWidth(50);
     }
     
-    protected final class MyLog {
-
-        MyLog(JTextArea txtArea){
-            setLogTextArea(txtArea);
-        }
-
-        private JTextArea logTextArea;   
-        private final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
-
-        public JTextArea getLogTextArea() {
-            return logTextArea;
-        }
-
-        public void setLogTextArea(JTextArea logTextArea) {
-            this.logTextArea = logTextArea;
-        }
-
-        public void logEvent(String message) {
-            getLogTextArea().append("[" + getDate() + "] " + message + "\n");
-        }
-
-        public void logError(Exception ex) {
-            getLogTextArea().append("[" + getDate() + "] " + ex.getMessage() + "\n");
-            for (StackTraceElement error : ex.getStackTrace()) {
-                getLogTextArea().append("\t" + error.toString() + "\n");
-            }
-        }
-
-        private String getDate() {
-            return dateFormat.format(new Date());
-        }
-
-        public void testLogEvent(){
-            logEvent("Test");
-        }
-        
-        public boolean canLogCommands() {
-            return logCommands.isSelected();
-        }
-
-        public boolean canLogStackTrace() {
-            return logErrorStackTrace.isSelected();
-        }
-        
-        public boolean canLogColor() {
-            return logColor.isSelected();
-        }
-        
-        public boolean canLogAdapter() {
-            return logAdapter.isSelected();
-        }
-    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -539,16 +489,18 @@ public class Application extends javax.swing.JFrame {
         adapterJTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         settingsJPanel = new javax.swing.JPanel();
-        outerJTextField = new javax.swing.JTextField();
-        internalJTextField = new javax.swing.JTextField();
         jButton2 = new javax.swing.JButton();
-        innerAdapterNameTextField = new javax.swing.JTextField();
-        outerAdapterNameTextField = new javax.swing.JTextField();
         logPanel = new javax.swing.JPanel();
         logErrorStackTrace = new javax.swing.JCheckBox();
         logCommands = new javax.swing.JCheckBox();
         logColor = new javax.swing.JCheckBox();
         logAdapter = new javax.swing.JCheckBox();
+        innerConPanel = new javax.swing.JPanel();
+        internalJTextField = new javax.swing.JTextField();
+        innerAdapterNameTextField = new javax.swing.JTextField();
+        outerConPanel = new javax.swing.JPanel();
+        outerJTextField = new javax.swing.JTextField();
+        outerAdapterNameTextField = new javax.swing.JTextField();
         logJPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         logJTextArea = new javax.swing.JTextArea();
@@ -708,6 +660,48 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        javax.swing.GroupLayout innerConPanelLayout = new javax.swing.GroupLayout(innerConPanel);
+        innerConPanel.setLayout(innerConPanelLayout);
+        innerConPanelLayout.setHorizontalGroup(
+            innerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(internalJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(innerAdapterNameTextField)
+                .addContainerGap())
+        );
+        innerConPanelLayout.setVerticalGroup(
+            innerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(innerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(internalJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(innerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout outerConPanelLayout = new javax.swing.GroupLayout(outerConPanel);
+        outerConPanel.setLayout(outerConPanelLayout);
+        outerConPanelLayout.setHorizontalGroup(
+            outerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(outerJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 553, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        outerConPanelLayout.setVerticalGroup(
+            outerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(outerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(outerJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout settingsJPanelLayout = new javax.swing.GroupLayout(settingsJPanel);
         settingsJPanel.setLayout(settingsJPanelLayout);
         settingsJPanelLayout.setHorizontalGroup(
@@ -718,34 +712,23 @@ public class Application extends javax.swing.JFrame {
                     .addGroup(settingsJPanelLayout.createSequentialGroup()
                         .addComponent(jButton2)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(settingsJPanelLayout.createSequentialGroup()
-                        .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(logPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(settingsJPanelLayout.createSequentialGroup()
-                                .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(outerJTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
-                                    .addComponent(internalJTextField))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
-                                    .addComponent(innerAdapterNameTextField))
-                                .addGap(0, 328, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, settingsJPanelLayout.createSequentialGroup()
+                        .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(logPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(outerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(innerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addContainerGap())))
         );
         settingsJPanelLayout.setVerticalGroup(
             settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(settingsJPanelLayout.createSequentialGroup()
-                .addGap(37, 37, 37)
-                .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(internalJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(innerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap()
+                .addComponent(innerConPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(settingsJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(outerJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(outerConPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 380, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 362, Short.MAX_VALUE)
                 .addComponent(jButton2)
                 .addContainerGap())
         );
@@ -830,7 +813,7 @@ public class Application extends javax.swing.JFrame {
                 String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
                         + "\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable "
                         + "/t REG_DWORD /d 0 /f";
-                if (myLog.canLogCommands())
+                if (logCommands.isSelected())
                     myLog.logEvent(cmd);
                 execCmd(cmd);
 //                myLog.logEvent("PROXY: Ieslēgt Automatic Detect Settings...");
@@ -847,7 +830,7 @@ public class Application extends javax.swing.JFrame {
                 String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
                         + "\\Windows\\CurrentVersion\\Internet Settings\" "
                         + "/v ProxyEnable /t REG_DWORD /d 1 /f";
-                if (myLog.canLogCommands())
+                if (logCommands.isSelected())
                     myLog.logEvent(cmd);
                 execCmd(cmd);
 //                myLog.logEvent("PROXY: Izslēgt Automatic Detect Settings...");
@@ -875,7 +858,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call disable";
-                        if (myLog.canLogCommands())
+                        if (logCommands.isSelected())
                             myLog.logEvent(cmd);
                         execCmd(cmd);
                     } else {
@@ -884,7 +867,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call enable";
-                        if (myLog.canLogCommands())
+                        if (logCommands.isSelected())
                             myLog.logEvent(cmd);
                         execCmd(cmd);
                     }
@@ -908,7 +891,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call disable";
-                        if (myLog.canLogCommands())
+                        if (logCommands.isSelected())
                             myLog.logEvent(cmd);
                         execCmd(cmd);
                     } else {
@@ -917,7 +900,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call enable";
-                        if (myLog.canLogCommands())
+                        if (logCommands.isSelected())
                             myLog.logEvent(cmd);
                         execCmd(cmd);
                     }
@@ -989,6 +972,7 @@ public class Application extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable adapterJTable;
     private javax.swing.JTextField innerAdapterNameTextField;
+    private javax.swing.JPanel innerConPanel;
     private javax.swing.JButton internalConButton;
     private javax.swing.JProgressBar internalJProgressBar1;
     private javax.swing.JTextField internalJTextField;
@@ -1012,6 +996,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JPanel netConJPanel;
     private javax.swing.JTextField outerAdapterNameTextField;
     private javax.swing.JButton outerConButton;
+    private javax.swing.JPanel outerConPanel;
     private javax.swing.JProgressBar outerJProgressBar1;
     private javax.swing.JTextField outerJTextField;
     private javax.swing.JButton proxyButton;

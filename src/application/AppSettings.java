@@ -23,7 +23,7 @@ public class AppSettings {
     private String propFilePath = "";
     private final String propFileName = "config.properties";
     
-    private Application.MyLog myLog = Application.myLog;
+    private MyLog myLog = Application.myLog;
     private Application myApp = null;
     
     public AppSettings(Application app){
@@ -32,8 +32,8 @@ public class AppSettings {
             propFilePath = new File(".").getCanonicalPath() + "\\";
         } catch (IOException ex) {
             myLog.logEvent("Nevarēju noteikt config faila ceļu!");
-            if (myLog.canLogStackTrace())
-                myLog.logError(ex);
+            if (myApp.getLogStackTraceCheckBox().isSelected())
+                myLog.logError(ex);            
         }
     }
     
@@ -45,7 +45,7 @@ public class AppSettings {
             myLog.logEvent("Config fails izveidots!");
         } catch (IOException ex) {
             myLog.logEvent("Nevar izveidot failu!");
-            if (myLog.canLogStackTrace())
+            if (myApp.getLogStackTraceCheckBox().isSelected())
                 myLog.logError(ex);
         }
     }
@@ -73,12 +73,12 @@ public class AppSettings {
             myLog.logEvent("Vērtību izgūšanu no faila pabeigta!");
         } catch (FileNotFoundException ex) {
             myLog.logEvent("Config fails nav atrasts!");
-            if (myLog.canLogStackTrace())
+            if (myApp.getLogStackTraceCheckBox().isSelected())
                 myLog.logError(ex);
             createConfigFile();
         } catch (Exception ex) {
             myLog.logEvent("Nevarēja ielādēt config failu!");
-            if (myLog.canLogStackTrace())
+            if (myApp.getLogStackTraceCheckBox().isSelected())
                 myLog.logError(ex);
         } finally {
             if(inputStream != null) {
@@ -86,7 +86,7 @@ public class AppSettings {
                     inputStream.close();
                 } catch (IOException ex) {
                     myLog.logEvent("Nevarēja aizvērt config failu!");
-                    if (myLog.canLogStackTrace())
+                    if (myApp.getLogStackTraceCheckBox().isSelected())
                         myLog.logError(ex);
                 }
             }
@@ -124,11 +124,11 @@ public class AppSettings {
             myLog.logEvent("Config fails veiksmīgi saglabāts!");
         } catch (FileNotFoundException ex) {
             myLog.logEvent("Nevarēja atrast failu!");
-            if(myLog.canLogStackTrace())
+            if(myApp.getLogStackTraceCheckBox().isSelected())
                 myLog.logError(ex);
         } catch (IOException ex) {
             myLog.logEvent("Radās problēmas saglabājot failu!");
-            if(myLog.canLogStackTrace())
+            if(myApp.getLogStackTraceCheckBox().isSelected())
                 myLog.logError(ex);
         } finally {
             if (output != null) {
@@ -136,7 +136,7 @@ public class AppSettings {
                     output.close();
                 } catch (IOException ex) {
                     myLog.logEvent("Nevarēja aizvērt config failu!");
-                    if(myLog.canLogStackTrace())
+                    if(myApp.getLogStackTraceCheckBox().isSelected())
                         myLog.logError(ex);
                 }
             }

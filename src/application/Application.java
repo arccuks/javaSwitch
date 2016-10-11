@@ -7,6 +7,7 @@ package application;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -17,6 +18,7 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.PlainDocument;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  *
@@ -25,6 +27,7 @@ import javax.swing.text.PlainDocument;
 public class Application extends javax.swing.JFrame {
     
     private final AppSettings appSettings;
+    private int fileCount = 0;
     
     private boolean innerAdapterEnabled = false;
     private boolean outerAdapterEnabled = false;
@@ -38,8 +41,9 @@ public class Application extends javax.swing.JFrame {
         super("Mana Help programma");
         initComponents();
         
-        //@TODO sataisīt settings sadaļu
+//        Ja nepieviešams ātri izslēgt settings sadaļu
 //        mainJTabbedPanel.setEnabledAt(1, false);
+
         logErrorStackTrace.setSelected(false);
         logCommands.setSelected(false);
         
@@ -79,6 +83,9 @@ public class Application extends javax.swing.JFrame {
         
         PlainDocument doc1 = (PlainDocument) outerJTextField.getDocument();
         doc1.setDocumentFilter(new MyIntFilter());
+        
+        connectionTableLinks();
+        System.out.println("connectionTableLinks()");
     }    
     
         // @TODO  Sis bus prieks atras connekcijas caur java!
@@ -312,6 +319,60 @@ public class Application extends javax.swing.JFrame {
         }
     }
     
+    private void crawl(File f, int fileCount, ArrayList<String[]> rdpFileNames) {
+//        System.out.println(FilenameUtils.getExtension(f.getAbsolutePath()));
+        if (f.isDirectory()) {
+        	File[] subFiles = f.listFiles();
+        	for (int i = 0; i < subFiles.length; i++) {
+                    crawl(subFiles[i], this.fileCount, rdpFileNames);
+        	}
+        } else {
+            if(FilenameUtils.getExtension(f.getAbsolutePath())
+                    .toLowerCase()
+                    .equals("rdp")) {
+                String[] add = {f.getName()};
+                rdpFileNames.add(add);
+                this.fileCount++;
+            }
+        }
+    }
+    
+    private void connectionTableLinks() {
+        File f = new File("D:\\Connections - Arejie\\");
+        ArrayList<String[]> rdpFileNames = new ArrayList<>();
+        
+        crawl(f, fileCount, rdpFileNames);
+        
+        if(fileCount == 0) {
+            System.out.println("Norādītajā mapē nav neviena rdp faila");
+//            String t = "Norādītajā mapē nav neviena rdp faila";
+            return;
+        }
+        
+        Object[][] data = new String[fileCount][];
+        for (int i = 0, a = 0; i < rdpFileNames.size(); i++) {
+                String[] row = rdpFileNames.get(i);
+//            if (row.length > 2) {
+                data[a] = row;
+                a++;
+//            }
+        }
+        
+        String[] column =
+            {"Index","NIC - nosaukums", "Adaptera nosaukums", "Status"};
+        
+        DefaultTableModel tm = new DefaultTableModel(data ,column) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return true;
+            }
+        };
+        
+        innerConTable.setModel(tm);
+    }
+    
+    // @TODO so mosh var parsaukt/parstradat
+    // lai varetu lietot automatisko pogu
     private void doProxy() {
         try {
             // Ja ir ieslēgts proxy serveris
@@ -325,13 +386,7 @@ public class Application extends javax.swing.JFrame {
                 if (logCommands.isSelected())
                     MyLog.logEvent(cmd);
                 execCmd(cmd);
-//                MyLog.logEvent("PROXY: Ieslēgt Automatic Detect Settings...");
-//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
-//                        + "\\CurrentVersion\\Internet Settings\" /v "
-//                        + "AutoDetect /t REG_DWORD /d 1 /f";
-//                if (MyLog.canLogCommands())
-//                    MyLog.logEvent(cmd);
-//                execCmd(cmd);
+
                 // Ja ir izslēgts proxy serveris
             } else {
                 setProxyButtonColor(true);
@@ -342,13 +397,6 @@ public class Application extends javax.swing.JFrame {
                 if (logCommands.isSelected())
                     MyLog.logEvent(cmd);
                 execCmd(cmd);
-//                MyLog.logEvent("PROXY: Izslēgt Automatic Detect Settings...");
-//                cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows"
-//                        + "\\CurrentVersion\\Internet Settings\" /v "
-//                        + "AutoDetect /t REG_DWORD /d 0 /f";
-//                if (MyLog.canLogCommands())
-//                    MyLog.logEvent(cmd);
-//                execCmd(cmd);
             }
         } catch (IOException ex) {
             MyLog.logError(ex);
@@ -558,6 +606,9 @@ public class Application extends javax.swing.JFrame {
         logJPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         logJTextArea = new javax.swing.JTextArea();
+        innerConMainPanel = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        innerConTable = new javax.swing.JTable();
         proxyStatusJProgressBar = new javax.swing.JProgressBar();
         proxyStatusLabel = new javax.swing.JLabel();
         internalJProgressBar1 = new javax.swing.JProgressBar();
@@ -817,6 +868,35 @@ public class Application extends javax.swing.JFrame {
 
         mainJTabbedPanel.addTab("Log", logJPanel);
 
+        innerConTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane2.setViewportView(innerConTable);
+
+        javax.swing.GroupLayout innerConMainPanelLayout = new javax.swing.GroupLayout(innerConMainPanel);
+        innerConMainPanel.setLayout(innerConMainPanelLayout);
+        innerConMainPanelLayout.setHorizontalGroup(
+            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        innerConMainPanelLayout.setVerticalGroup(
+            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        mainJTabbedPanel.addTab("Inner Connections", innerConMainPanel);
+
         proxyStatusLabel.setText("Proxy Status: (?)");
         proxyStatusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1012,7 +1092,9 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JTable adapterJTable;
     private javax.swing.JCheckBox autoProxyCheckBox;
     private javax.swing.JTextField innerAdapterNameTextField;
+    private javax.swing.JPanel innerConMainPanel;
     private javax.swing.JPanel innerConPanel;
+    private javax.swing.JTable innerConTable;
     private javax.swing.JButton internalConButton;
     private javax.swing.JProgressBar internalJProgressBar1;
     private javax.swing.JTextField internalJTextField;
@@ -1024,6 +1106,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JCheckBox logAdapter;
     private javax.swing.JCheckBox logColor;

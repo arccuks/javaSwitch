@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.PlainDocument;
 import org.apache.commons.io.FilenameUtils;
@@ -36,6 +37,7 @@ public class Application extends javax.swing.JFrame {
     protected static MyLog myLog;
     protected String innerAdapterConnection = "Local Area Connection";
     protected String outerAdapterConnection = "Wireless Network Connection";
+    protected String innerConnectionPath = "D:\\Connections - Arejie\\";
 
     public Application() {
         super("Mana Help programma");
@@ -68,6 +70,8 @@ public class Application extends javax.swing.JFrame {
         outerConButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         proxyButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         proxyStatusLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        internalJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        outerJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 
         setButtonColors();
         try {
@@ -77,6 +81,10 @@ public class Application extends javax.swing.JFrame {
         }
         setAdapters();
         runRefresher();
+        setRDPTables();
+        
+        mainJTabbedPanel.setEnabledAt(3, false);
+        mainJTabbedPanel.setEnabledAt(4, false);
         
         PlainDocument doc = (PlainDocument) internalJTextField.getDocument();
         doc.setDocumentFilter(new MyIntFilter());
@@ -84,8 +92,42 @@ public class Application extends javax.swing.JFrame {
         PlainDocument doc1 = (PlainDocument) outerJTextField.getDocument();
         doc1.setDocumentFilter(new MyIntFilter());
         
-        connectionTableLinks();
-        System.out.println("connectionTableLinks()");
+        
+        innerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                
+                int row = innerConTable.getSelectedRow();
+                int col = innerConTable.getSelectedColumn();
+                if (row >= 0 && col >= 0) {
+                    try {
+                        execCmd("cmd /c start mstsc \"" + getInnerConPath() + innerConTable.getValueAt(row, col) + "\"");
+//                        execCmd("cmd /c start mstsc inner\\vzd.rdp");
+//                        execCmd("mstsc /v:10.219.4.218 /admin /f");
+                    } catch (IOException ex) {
+                        MyLog.logError(ex);
+                    }
+                }  
+            }
+        }
+        );
+        
+        outerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                
+                int row = outerConTable.getSelectedRow();
+                int col = outerConTable.getSelectedColumn();
+                if (row >= 0 && col >= 0) {
+                    try {
+                        execCmd("cmd /c start mstsc \"" + getOuterConPath() + outerConTable.getValueAt(row, col) + "\"");
+                    } catch (IOException ex) {
+                        MyLog.logError(ex);
+                    }
+                }  
+            }
+        }
+        );
     }    
     
         // @TODO  Sis bus prieks atras connekcijas caur java!
@@ -101,7 +143,7 @@ public class Application extends javax.swing.JFrame {
 //    }
     
     
-    //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">    
+    //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">        
     private String getInternalAdapterIndex(){
         return internalJTextField.getText();
     }
@@ -116,6 +158,14 @@ public class Application extends javax.swing.JFrame {
     
     public String getOuterAdapterTextField(){
         return outerAdapterNameTextField.getText();
+    }
+    
+    public String getInnerConPath(){
+        return innerConnectionPathTextField.getText();
+    }
+    
+    public String getOuterConPath(){
+        return outerConnectionPathTextField.getText();
     }
     
     public boolean canLogErrorStackTrace(){
@@ -150,7 +200,15 @@ public class Application extends javax.swing.JFrame {
         return outerAdapterEnabled;
     }
     
-    public void setInnerAdapterTextField(String value){
+    protected void setInnerConPath(String value){
+        innerConnectionPathTextField.setText(value);
+    }
+    
+    protected void setOuterConPath(String value){
+        outerConnectionPathTextField.setText(value);
+    }
+    
+    protected void setInnerAdapterTextField(String value){
         innerAdapterNameTextField.setText(value);
         this.innerAdapterConnection = value;
     }
@@ -337,29 +395,28 @@ public class Application extends javax.swing.JFrame {
         }
     }
     
-    private void connectionTableLinks() {
-        File f = new File("D:\\Connections - Arejie\\");
+    private void connectionTableLinks(String pathToProces,JTable table) {
+        fileCount = 0;
+        
+        File f = new File(pathToProces);        
         ArrayList<String[]> rdpFileNames = new ArrayList<>();
         
         crawl(f, fileCount, rdpFileNames);
         
         if(fileCount == 0) {
-            System.out.println("Norādītajā mapē nav neviena rdp faila");
-//            String t = "Norādītajā mapē nav neviena rdp faila";
+            MyLog.logEvent("Norādītajā mapē nav neviena rdp faila");
             return;
         }
         
         Object[][] data = new String[fileCount][];
         for (int i = 0, a = 0; i < rdpFileNames.size(); i++) {
                 String[] row = rdpFileNames.get(i);
-//            if (row.length > 2) {
                 data[a] = row;
                 a++;
-//            }
         }
         
         String[] column =
-            {"Index","NIC - nosaukums", "Adaptera nosaukums", "Status"};
+            {"File Name"};
         
         DefaultTableModel tm = new DefaultTableModel(data ,column) {
             @Override
@@ -368,7 +425,7 @@ public class Application extends javax.swing.JFrame {
             }
         };
         
-        innerConTable.setModel(tm);
+        table.setModel(tm);
     }
     
     // @TODO so mosh var parsaukt/parstradat
@@ -443,8 +500,10 @@ public class Application extends javax.swing.JFrame {
                             internalJProgressBar1.setIndeterminate(false);
                             internalJProgressBar1.setValue(100);
                             setInnerAdapterEnabled(true);
+                            mainJTabbedPanel.setEnabledAt(3, true);
                             MyLog.logEvent("INNER: Iekšējais tīkls ieslēdzās..");
                             generateTable();
+                            
                         }
                 return data;
             }).map((data) -> {
@@ -456,6 +515,7 @@ public class Application extends javax.swing.JFrame {
                     internalJProgressBar1.setValue(0);
                     internalJProgressBar1.setIndeterminate(false);
                     setInnerAdapterEnabled(false);
+                    mainJTabbedPanel.setEnabledAt(3, false);
                     MyLog.logEvent("INNER: Iekšējais tīkls izslēdzās..");
                     generateTable();
                 }
@@ -470,6 +530,7 @@ public class Application extends javax.swing.JFrame {
                     outerJProgressBar1.setValue(100);
                     outerJProgressBar1.setIndeterminate(false);
                     setOuterAdapterEnabled(true);
+                    mainJTabbedPanel.setEnabledAt(4, true);
                     MyLog.logEvent("OUTER: Ārējais tīkls ieslēdzās..");
                     generateTable();
                 }
@@ -484,6 +545,7 @@ public class Application extends javax.swing.JFrame {
                 return _item;
             }).map((_item) -> {
                 setOuterAdapterEnabled(false);
+                mainJTabbedPanel.setEnabledAt(4, false);
                 return _item;
             }).forEach((_item) -> {
                 MyLog.logEvent("OUTER: Ārējais tīkls izslēdzās..");
@@ -569,6 +631,85 @@ public class Application extends javax.swing.JFrame {
         adapterJTable.getColumnModel().getColumn(3).setMaxWidth(50);
     }
     
+    private void setRDPTables() {
+        if(!innerConnectionPathTextField.getText().isEmpty()) {
+            connectionTableLinks(getInnerConPath(), innerConTable);
+        }
+
+        if(!outerConnectionPathTextField.getText().isEmpty()) {
+            connectionTableLinks(getOuterConPath(), outerConTable);
+        }
+    }
+    
+    private void innerNetworkSwitcher() {
+        internalJProgressBar1.setIndeterminate(true);
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    if(isInnerAdapterEnabled()) {
+                        setInnerButtonColor(false);
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...");
+                        String cmd = "cmd /c start wmic path win32_networkadapter "
+                                + "where index=" + getInternalAdapterIndex() 
+                                + " call disable";
+                        if (logCommands.isSelected())
+                            MyLog.logEvent(cmd);
+                        execCmd(cmd);
+                    } else {
+                        setInnerButtonColor(true);
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...");
+                        String cmd = "cmd /c start wmic path win32_networkadapter "
+                                + "where index=" + getInternalAdapterIndex() 
+                                + " call enable";
+                        if (logCommands.isSelected())
+                            MyLog.logEvent(cmd);
+                        execCmd(cmd);
+                    }
+                    
+                    if(autoProxyCheckBox.isSelected())
+                        doProxy();
+
+                } catch (IOException ex) {
+                    MyLog.logError(ex);
+                }
+            };
+        }.start();
+    }
+    
+    private void outerNetworkSwitcher() {
+        outerJProgressBar1.setIndeterminate(true);
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    if(isOuterAdapterEnabled()) {
+                        setOuterButtonColor(false);
+                        MyLog.logEvent("OUTER: Ārējā adaptera izslēgšana ...");
+                        String cmd = "cmd /c start wmic path win32_networkadapter "
+                                + "where index=" + getOuterAdapterIndex() 
+                                + " call disable";
+                        if (logCommands.isSelected())
+                            MyLog.logEvent(cmd);
+                        execCmd(cmd);
+                    } else {
+                        setOuterButtonColor(true);
+                        MyLog.logEvent("OUTER: Ārējā adaptera startēšana ...");
+                        String cmd = "cmd /c start wmic path win32_networkadapter "
+                                + "where index=" + getOuterAdapterIndex() 
+                                + " call enable";
+                        if (logCommands.isSelected())
+                            MyLog.logEvent(cmd);
+                        execCmd(cmd);
+                    }
+
+                } catch (IOException ex) {
+                    MyLog.logError(ex);
+                }
+            };
+        }.start();
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -599,9 +740,11 @@ public class Application extends javax.swing.JFrame {
         innerConPanel = new javax.swing.JPanel();
         internalJTextField = new javax.swing.JTextField();
         innerAdapterNameTextField = new javax.swing.JTextField();
+        innerConnectionPathTextField = new javax.swing.JTextField();
         outerConPanel = new javax.swing.JPanel();
         outerJTextField = new javax.swing.JTextField();
         outerAdapterNameTextField = new javax.swing.JTextField();
+        outerConnectionPathTextField = new javax.swing.JTextField();
         autoProxyCheckBox = new javax.swing.JCheckBox();
         logJPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -609,6 +752,9 @@ public class Application extends javax.swing.JFrame {
         innerConMainPanel = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         innerConTable = new javax.swing.JTable();
+        outerConMainPanel = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        outerConTable = new javax.swing.JTable();
         proxyStatusJProgressBar = new javax.swing.JProgressBar();
         proxyStatusLabel = new javax.swing.JLabel();
         internalJProgressBar1 = new javax.swing.JProgressBar();
@@ -751,7 +897,7 @@ public class Application extends javax.swing.JFrame {
                 .addComponent(logColor)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logAdapter)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(236, Short.MAX_VALUE))
         );
         logPanelLayout.setVerticalGroup(
             logPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -773,7 +919,9 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(internalJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(innerAdapterNameTextField)
+                .addComponent(innerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(innerConnectionPathTextField)
                 .addContainerGap())
         );
         innerConPanelLayout.setVerticalGroup(
@@ -782,7 +930,8 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(innerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(internalJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(innerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(innerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(innerConnectionPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -794,7 +943,9 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(outerJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 553, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 230, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(outerConnectionPathTextField)
                 .addContainerGap())
         );
         outerConPanelLayout.setVerticalGroup(
@@ -803,7 +954,8 @@ public class Application extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(outerConPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(outerJTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(outerAdapterNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(outerConnectionPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -897,10 +1049,51 @@ public class Application extends javax.swing.JFrame {
 
         mainJTabbedPanel.addTab("Inner Connections", innerConMainPanel);
 
+        outerConTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane4.setViewportView(outerConTable);
+
+        javax.swing.GroupLayout outerConMainPanelLayout = new javax.swing.GroupLayout(outerConMainPanel);
+        outerConMainPanel.setLayout(outerConMainPanelLayout);
+        outerConMainPanelLayout.setHorizontalGroup(
+            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        outerConMainPanelLayout.setVerticalGroup(
+            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        mainJTabbedPanel.addTab("Outer Connections", outerConMainPanel);
+
         proxyStatusLabel.setText("Proxy Status: (?)");
         proxyStatusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 proxyStatusLabelMouseClicked(evt);
+            }
+        });
+
+        internalJProgressBar1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                internalJProgressBar1MouseClicked(evt);
+            }
+        });
+
+        outerJProgressBar1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                outerJProgressBar1MouseClicked(evt);
             }
         });
 
@@ -953,72 +1146,11 @@ public class Application extends javax.swing.JFrame {
     }//GEN-LAST:event_proxyButtonActionPerformed
 
     private void outerConButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outerConButtonActionPerformed
-        outerJProgressBar1.setIndeterminate(true);
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    if(isOuterAdapterEnabled()) {
-                        setOuterButtonColor(false);
-                        MyLog.logEvent("OUTER: Ārējā adaptera izslēgšana ...");
-                        String cmd = "cmd /c start wmic path win32_networkadapter "
-                                + "where index=" + getOuterAdapterIndex() 
-                                + " call disable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
-                        execCmd(cmd);
-                    } else {
-                        setOuterButtonColor(true);
-                        MyLog.logEvent("OUTER: Ārējā adaptera startēšana ...");
-                        String cmd = "cmd /c start wmic path win32_networkadapter "
-                                + "where index=" + getOuterAdapterIndex() 
-                                + " call enable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
-                        execCmd(cmd);
-                    }
-
-                } catch (IOException ex) {
-                    MyLog.logError(ex);
-                }
-            };
-        }.start();
+        outerNetworkSwitcher();
     }//GEN-LAST:event_outerConButtonActionPerformed
 
     private void internalConButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_internalConButtonActionPerformed
-        internalJProgressBar1.setIndeterminate(true);
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    if(isInnerAdapterEnabled()) {
-                        setInnerButtonColor(false);
-                        MyLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...");
-                        String cmd = "cmd /c start wmic path win32_networkadapter "
-                                + "where index=" + getInternalAdapterIndex() 
-                                + " call disable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
-                        execCmd(cmd);
-                    } else {
-                        setInnerButtonColor(true);
-                        MyLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...");
-                        String cmd = "cmd /c start wmic path win32_networkadapter "
-                                + "where index=" + getInternalAdapterIndex() 
-                                + " call enable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
-                        execCmd(cmd);
-                    }
-                    
-                    if(autoProxyCheckBox.isSelected())
-                        doProxy();
-
-                } catch (IOException ex) {
-                    MyLog.logError(ex);
-                }
-            };
-        }.start();
+        innerNetworkSwitcher();
     }//GEN-LAST:event_internalConButtonActionPerformed
 
     private void proxyStatusLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_proxyStatusLabelMouseClicked
@@ -1035,7 +1167,8 @@ public class Application extends javax.swing.JFrame {
             appSettings.getPropValues();
             
             setButtonColors();
-            setAdapters();
+            setAdapters();          
+            setRDPTables();
             
         //execCmd("cmd /c start inner\\vzd.rdp");
         } catch (Exception ex) {
@@ -1057,9 +1190,14 @@ public class Application extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_autoProxyCheckBoxStateChanged
 
-    /**
-     * @param args the command line arguments
-     */
+    private void internalJProgressBar1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_internalJProgressBar1MouseClicked
+        innerNetworkSwitcher();
+    }//GEN-LAST:event_internalJProgressBar1MouseClicked
+
+    private void outerJProgressBar1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_outerJProgressBar1MouseClicked
+        outerNetworkSwitcher();
+    }//GEN-LAST:event_outerJProgressBar1MouseClicked
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -1095,6 +1233,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JPanel innerConMainPanel;
     private javax.swing.JPanel innerConPanel;
     private javax.swing.JTable innerConTable;
+    private javax.swing.JTextField innerConnectionPathTextField;
     private javax.swing.JButton internalConButton;
     private javax.swing.JProgressBar internalJProgressBar1;
     private javax.swing.JTextField internalJTextField;
@@ -1108,6 +1247,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JCheckBox logAdapter;
     private javax.swing.JCheckBox logColor;
     private javax.swing.JCheckBox logCommands;
@@ -1119,7 +1259,10 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JPanel netConJPanel;
     private javax.swing.JTextField outerAdapterNameTextField;
     private javax.swing.JButton outerConButton;
+    private javax.swing.JPanel outerConMainPanel;
     private javax.swing.JPanel outerConPanel;
+    private javax.swing.JTable outerConTable;
+    private javax.swing.JTextField outerConnectionPathTextField;
     private javax.swing.JProgressBar outerJProgressBar1;
     private javax.swing.JTextField outerJTextField;
     private javax.swing.JButton proxyButton;

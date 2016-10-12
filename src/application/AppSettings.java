@@ -71,6 +71,8 @@ public class AppSettings {
             myApp.setLogColor(prop.getProperty("logColor"));
             myApp.setLogAdapter(prop.getProperty("logAdapter"));
             myApp.setAutoProxy(prop.getProperty("autoProxy"));
+            myApp.setInnerConPath(prop.getProperty("innerConPath"));
+            myApp.setOuterConPath(prop.getProperty("outerConPath"));
             MyLog.logEvent("Vērtību uzstādīšanu pabeigta!");
         } catch (FileNotFoundException ex) {
             MyLog.logEvent("Config fails nav atrasts!");
@@ -114,6 +116,17 @@ public class AppSettings {
                             myApp.outerAdapterConnection :
                             myApp.getOuterAdapterTextField()
                     ));
+            prop.setProperty("innerConPath", (
+                    (myApp.getInnerConPath().isEmpty()) ? 
+                            "" :
+                            myApp.getInnerConPath()
+                    ));
+            prop.setProperty("outerConPath", (
+                    (myApp.getOuterConPath().isEmpty()) ? 
+                            "" :
+                            myApp.getOuterConPath()
+                    ));
+            
             prop.setProperty("logErrorStackTrace",String.valueOf(
                     myApp.canLogErrorStackTrace()));
             prop.setProperty("logCommands",String.valueOf(

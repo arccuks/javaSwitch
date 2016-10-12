@@ -54,7 +54,8 @@ public class Application extends javax.swing.JFrame {
         outerConPanel.setBorder(BorderFactory.createTitledBorder("Outer Network Connection"));
         
         logJTextArea.setEditable(false);
-        myLog = new MyLog(logJTextArea);
+//        myLog = new MyLog(logJTextArea);
+        myLog = new MyLog(logTextPane);
         
         appSettings = new AppSettings(this);
         appSettings.getPropValues();
@@ -755,6 +756,8 @@ public class Application extends javax.swing.JFrame {
         outerConMainPanel = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
         outerConTable = new javax.swing.JTable();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        logTextPane = new javax.swing.JTextPane();
         proxyStatusJProgressBar = new javax.swing.JProgressBar();
         proxyStatusLabel = new javax.swing.JLabel();
         internalJProgressBar1 = new javax.swing.JProgressBar();
@@ -1078,6 +1081,10 @@ public class Application extends javax.swing.JFrame {
 
         mainJTabbedPanel.addTab("Outer Connections", outerConMainPanel);
 
+        jScrollPane5.setViewportView(logTextPane);
+
+        mainJTabbedPanel.addTab("Log", jScrollPane5);
+
         proxyStatusLabel.setText("Proxy Status: (?)");
         proxyStatusLabel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1248,6 +1255,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JCheckBox logAdapter;
     private javax.swing.JCheckBox logColor;
     private javax.swing.JCheckBox logCommands;
@@ -1255,6 +1263,7 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JPanel logJPanel;
     private javax.swing.JTextArea logJTextArea;
     private javax.swing.JPanel logPanel;
+    private javax.swing.JTextPane logTextPane;
     private javax.swing.JTabbedPane mainJTabbedPanel;
     private javax.swing.JPanel netConJPanel;
     private javax.swing.JTextField outerAdapterNameTextField;

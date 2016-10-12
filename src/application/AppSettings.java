@@ -75,7 +75,7 @@ public class AppSettings {
             myApp.setOuterConPath(prop.getProperty("outerConPath"));
             MyLog.logEvent("Vērtību uzstādīšanu pabeigta!");
         } catch (FileNotFoundException ex) {
-            MyLog.logEvent("Config fails nav atrasts!");
+            MyLog.logError("Config fails nav atrasts!");
             if (myApp.canLogErrorStackTrace())
                 MyLog.logError(ex);
             createConfigFile();

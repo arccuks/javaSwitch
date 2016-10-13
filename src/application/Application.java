@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -37,112 +35,25 @@ public class Application extends javax.swing.JFrame {
     protected static MyLog myLog;
     protected String innerAdapterConnection = "Local Area Connection";
     protected String outerAdapterConnection = "Wireless Network Connection";
-    protected String innerConnectionPath = "D:\\Connections - Arejie\\";
+    
+    private final String innerJPanelName = "Inner Connections";
+    private final String outerJPanelName = "Outer Connections";
 
     public Application() {
         super("Mana Help programma");
         initComponents();
         
-//        Ja nepieviešams ātri izslēgt settings sadaļu
-//        mainJTabbedPanel.setEnabledAt(1, false);
-
-        logErrorStackTrace.setSelected(false);
-        logCommands.setSelected(false);
-        
-        logPanel.setBorder(BorderFactory.createTitledBorder("Log Commands"));
-        innerConPanel.setBorder(BorderFactory.createTitledBorder("Inner Network Connection"));
-        outerConPanel.setBorder(BorderFactory.createTitledBorder("Outer Network Connection"));
-        
-        logJTextArea.setEditable(false);
-//        myLog = new MyLog(logJTextArea);
-        myLog = new MyLog(logTextPane);
-        
+        new MyLog(logTextPane);
+        initComponentsLocal();
+       
         appSettings = new AppSettings(this);
         appSettings.getPropValues();
-        
-        internalConButton.setBackground(Color.BLACK);
-        outerConButton.setBackground(Color.BLACK);
-        proxyButton.setBackground(Color.BLACK);
-        
-        internalJTextField.setEditable(false);
-        outerJTextField.setEditable(false);
-        
-        internalConButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        outerConButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        proxyButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        proxyStatusLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        internalJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        outerJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
                 
         setButtonColors();
-        try {
-            Thread.sleep(1);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(Application.class.getName()).log(Level.SEVERE, null, ex);
-        }
         setAdapters();
         runRefresher();
         setRDPTables();
-        
-        mainJTabbedPanel.setEnabledAt(3, false);
-        mainJTabbedPanel.setEnabledAt(4, false);
-        
-        PlainDocument doc = (PlainDocument) internalJTextField.getDocument();
-        doc.setDocumentFilter(new MyIntFilter());
-        
-        PlainDocument doc1 = (PlainDocument) outerJTextField.getDocument();
-        doc1.setDocumentFilter(new MyIntFilter());
-        
-        
-        innerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                
-                int row = innerConTable.getSelectedRow();
-                int col = innerConTable.getSelectedColumn();
-                if (row >= 0 && col >= 0) {
-                    try {
-                        execCmd("cmd /c start mstsc \"" + getInnerConPath() + innerConTable.getValueAt(row, col) + "\"");
-//                        execCmd("cmd /c start mstsc inner\\vzd.rdp");
-//                        execCmd("mstsc /v:10.219.4.218 /admin /f");
-                    } catch (IOException ex) {
-                        MyLog.logError(ex);
-                    }
-                }  
-            }
-        }
-        );
-        
-        outerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                
-                int row = outerConTable.getSelectedRow();
-                int col = outerConTable.getSelectedColumn();
-                if (row >= 0 && col >= 0) {
-                    try {
-                        execCmd("cmd /c start mstsc \"" + getOuterConPath() + outerConTable.getValueAt(row, col) + "\"");
-                    } catch (IOException ex) {
-                        MyLog.logError(ex);
-                    }
-                }  
-            }
-        }
-        );
-    }    
-    
-        // @TODO  Sis bus prieks atras connekcijas caur java!
-//        try {
-//            execCmdN("mstsc /v:10.219.4.218 /admin /f");
-//        } catch (IOException ex) {
-//            MyLog.logError(ex);
-//        }        
-    
-    
-//    private void execCmdN(String cmd) throws IOException {
-//        Runtime.getRuntime().exec(cmd);
-//    }
-    
+    }          
     
     //<editor-fold defaultstate="collapsed" desc="SETTERI un GETTERI">        
     private String getInternalAdapterIndex(){
@@ -153,19 +64,19 @@ public class Application extends javax.swing.JFrame {
         return outerJTextField.getText();
     }
     
-    public String getInnerAdapterTextField(){
+    protected String getInnerAdapterTextField(){
         return innerAdapterNameTextField.getText();
     }
     
-    public String getOuterAdapterTextField(){
+    protected String getOuterAdapterTextField(){
         return outerAdapterNameTextField.getText();
     }
     
-    public String getInnerConPath(){
+    protected String getInnerConPath(){
         return innerConnectionPathTextField.getText();
     }
     
-    public String getOuterConPath(){
+    protected String getOuterConPath(){
         return outerConnectionPathTextField.getText();
     }
     
@@ -270,7 +181,7 @@ public class Application extends javax.swing.JFrame {
     private void setInnerButtonColor(){
 //        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
         if(isInnerAdapterEnabled()){
-            internalConButton.setForeground(Color.GREEN);
+            internalConButton.setForeground(getColorGreenOK());
         } else {
             internalConButton.setForeground(Color.RED);
         }
@@ -279,7 +190,7 @@ public class Application extends javax.swing.JFrame {
     private void setInnerButtonColor(boolean isButtonPressed){
 //        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
         if(isButtonPressed){
-            internalConButton.setForeground(Color.GREEN);
+            internalConButton.setForeground(getColorGreenOK());
         } else {
             internalConButton.setForeground(Color.RED);
         }
@@ -289,7 +200,7 @@ public class Application extends javax.swing.JFrame {
     private void setOuterButtonColor(){
 //        MyLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
         if(isOuterAdapterEnabled()){
-            outerConButton.setForeground(Color.GREEN);
+            outerConButton.setForeground(getColorGreenOK());
         } else {
             outerConButton.setForeground(Color.RED);
         }
@@ -298,7 +209,7 @@ public class Application extends javax.swing.JFrame {
     private void setOuterButtonColor(boolean isButtonPressed){
 //        MyLog.logEvent("COLOR: Ārējās pogas krāsas maiņa...");
         if(isButtonPressed){
-            outerConButton.setForeground(Color.GREEN);
+            outerConButton.setForeground(getColorGreenOK());
         } else {
             outerConButton.setForeground(Color.RED);
         }
@@ -308,7 +219,7 @@ public class Application extends javax.swing.JFrame {
     private void setProxyButtonColor(){
 //        MyLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
         if(isProxyEnabled()){
-            proxyButton.setForeground(Color.GREEN);
+            proxyButton.setForeground(getColorGreenOK());
         } else {
             proxyButton.setForeground(Color.RED);
         }
@@ -317,12 +228,106 @@ public class Application extends javax.swing.JFrame {
     private void setProxyButtonColor(boolean isButtonPressed){
 //        MyLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
         if(isButtonPressed){
-            proxyButton.setForeground(Color.GREEN);
+            proxyButton.setForeground(getColorGreenOK());
         } else {
             proxyButton.setForeground(Color.RED);
         }
     }
+    
+    private Color getColorGreenOK() {
+        return Color.decode("#017701");
+    }
     //</editor-fold>
+    
+    // Uzlieku savus uzstadijumus componentem
+    private void initComponentsLocal() {
+        MyLog.logEvent("Ielādējam komponenšu uzstādījumus..");
+        logErrorStackTrace.setSelected(false);
+        logCommands.setSelected(false);
+        
+        logPanel.setBorder(BorderFactory.createTitledBorder("Log Commands"));
+        innerConPanel.setBorder(BorderFactory.createTitledBorder("Inner Network Connection"));
+        outerConPanel.setBorder(BorderFactory.createTitledBorder("Outer Network Connection"));
+        
+        internalConButton.setBackground(Color.GRAY);
+        outerConButton.setBackground(Color.GRAY);
+        proxyButton.setBackground(Color.GRAY);
+        
+        logTextPane.setEditable(false);        
+        internalJTextField.setEditable(false);
+        outerJTextField.setEditable(false);
+        
+        internalConButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        outerConButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        proxyButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        proxyStatusLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        internalJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        outerJProgressBar1.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(innerJPanelName), false);
+        mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(outerJPanelName), false);
+        
+        PlainDocument doc = (PlainDocument) internalJTextField.getDocument();
+        doc.setDocumentFilter(new MyIntFilter());
+        
+        PlainDocument doc1 = (PlainDocument) outerJTextField.getDocument();
+        doc1.setDocumentFilter(new MyIntFilter());
+        
+
+        innerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                
+                int row = innerConTable.getSelectedRow();
+                int col = innerConTable.getSelectedColumn();
+                if (row >= 0 && col >= 0) {
+                    
+                    // Laizu jauna threda, lai CMD nenobloketu pasu Applikaciju
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                String cmd = "cmd /c start mstsc \"" + getInnerConPath() + innerConTable.getValueAt(row, col) + "\"";
+                                execCmd(cmd);
+                                MyLog.logEvent(cmd, canLogCommands());
+//                                    execCmd("cmd /c start mstsc inner\\vzd.rdp");
+//                                    execCmd("mstsc /v:10.219.4.218 /admin /f");
+                            } catch (IOException ex) {
+                                MyLog.logError(ex);
+                            }
+                        }
+                    }.start();
+                }  
+            }
+        }
+        );
+        
+        outerConTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                
+                int row = outerConTable.getSelectedRow();
+                int col = outerConTable.getSelectedColumn();
+                if (row >= 0 && col >= 0) {
+                    
+                    // Laizu jauna threda, lai CMD nenobloketu pasu Applikaciju
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                String cmd = "cmd /c start mstsc \"" + getOuterConPath() + outerConTable.getValueAt(row, col) + "\"";
+                                execCmd(cmd);
+                                MyLog.logEvent(cmd, canLogCommands());
+                            } catch (IOException ex) {
+                                MyLog.logError(ex);
+                            }
+                        }
+                    };
+                }
+            }
+        });
+        MyLog.logSuccess("Komponenšu uzstādījumi ielādēti!");
+    }
     
     // Palaižu cmd komandas
     private String execCmd(String cmd) throws IOException {
@@ -396,16 +401,17 @@ public class Application extends javax.swing.JFrame {
         }
     }
     
-    private void connectionTableLinks(String pathToProces,JTable table) {
+    private void getConTableInfo(String pathToProces,JTable table) {
         fileCount = 0;
         
-        File f = new File(pathToProces);        
+        File f = new File(pathToProces); 
+        String[] column = {"File Name"};
         ArrayList<String[]> rdpFileNames = new ArrayList<>();
         
         crawl(f, fileCount, rdpFileNames);
         
         if(fileCount == 0) {
-            MyLog.logEvent("Norādītajā mapē nav neviena rdp faila");
+            MyLog.logError("Norādītajā mapē nav neviena rdp faila");
             return;
         }
         
@@ -416,17 +422,16 @@ public class Application extends javax.swing.JFrame {
                 a++;
         }
         
-        String[] column =
-            {"File Name"};
-        
-        DefaultTableModel tm = new DefaultTableModel(data ,column) {
+        table.setModel(getDefaultTableModel(data,column,false));
+    }
+    
+    private DefaultTableModel getDefaultTableModel(Object[][] data, String[] columns,Boolean editable) {
+        return new DefaultTableModel(data ,columns) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return true;
+                return editable;
             }
         };
-        
-        table.setModel(tm);
     }
     
     // @TODO so mosh var parsaukt/parstradat
@@ -441,8 +446,7 @@ public class Application extends javax.swing.JFrame {
                 String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
                         + "\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable "
                         + "/t REG_DWORD /d 0 /f";
-                if (logCommands.isSelected())
-                    MyLog.logEvent(cmd);
+                MyLog.logEvent(cmd, canLogCommands());
                 execCmd(cmd);
 
                 // Ja ir izslēgts proxy serveris
@@ -452,8 +456,7 @@ public class Application extends javax.swing.JFrame {
                 String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
                         + "\\Windows\\CurrentVersion\\Internet Settings\" "
                         + "/v ProxyEnable /t REG_DWORD /d 1 /f";
-                if (logCommands.isSelected())
-                    MyLog.logEvent(cmd);
+                MyLog.logEvent(cmd, canLogCommands());
                 execCmd(cmd);
             }
         } catch (IOException ex) {
@@ -501,8 +504,8 @@ public class Application extends javax.swing.JFrame {
                             internalJProgressBar1.setIndeterminate(false);
                             internalJProgressBar1.setValue(100);
                             setInnerAdapterEnabled(true);
-                            mainJTabbedPanel.setEnabledAt(3, true);
-                            MyLog.logEvent("INNER: Iekšējais tīkls ieslēdzās..");
+                            mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(innerJPanelName), true);
+                            MyLog.logEvent("INNER: Iekšējais tīkls tiek ieslēgts..");
                             generateTable();
                             
                         }
@@ -516,8 +519,8 @@ public class Application extends javax.swing.JFrame {
                     internalJProgressBar1.setValue(0);
                     internalJProgressBar1.setIndeterminate(false);
                     setInnerAdapterEnabled(false);
-                    mainJTabbedPanel.setEnabledAt(3, false);
-                    MyLog.logEvent("INNER: Iekšējais tīkls izslēdzās..");
+                    mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(innerJPanelName), false);
+                    MyLog.logEvent("INNER: Iekšējais tīkls tiek izslēgts..");
                     generateTable();
                 }
                 return data;
@@ -531,8 +534,8 @@ public class Application extends javax.swing.JFrame {
                     outerJProgressBar1.setValue(100);
                     outerJProgressBar1.setIndeterminate(false);
                     setOuterAdapterEnabled(true);
-                    mainJTabbedPanel.setEnabledAt(4, true);
-                    MyLog.logEvent("OUTER: Ārējais tīkls ieslēdzās..");
+                    mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(outerJPanelName), true);
+                    MyLog.logEvent("OUTER: Ārējais tīkls tiek ieslēgts..");
                     generateTable();
                 }
                 
@@ -546,10 +549,10 @@ public class Application extends javax.swing.JFrame {
                 return _item;
             }).map((_item) -> {
                 setOuterAdapterEnabled(false);
-                mainJTabbedPanel.setEnabledAt(4, false);
+                mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(outerJPanelName), false);
                 return _item;
             }).forEach((_item) -> {
-                MyLog.logEvent("OUTER: Ārējais tīkls izslēdzās..");
+                MyLog.logEvent("OUTER: Ārējais tīkls tiek izslēgts..");
                 generateTable();
             });
             
@@ -617,13 +620,7 @@ public class Application extends javax.swing.JFrame {
             }
         }
 
-        DefaultTableModel tm = new DefaultTableModel(data ,column) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return true;
-            }
-        };
-        adapterJTable.setModel(tm);
+        adapterJTable.setModel(getDefaultTableModel(data,column,true));
 
         // Salieku kolonnu platumus, tādus, kādus vēlos
         adapterJTable.getColumnModel().getColumn(0).setMaxWidth(40);
@@ -634,11 +631,15 @@ public class Application extends javax.swing.JFrame {
     
     private void setRDPTables() {
         if(!innerConnectionPathTextField.getText().isEmpty()) {
-            connectionTableLinks(getInnerConPath(), innerConTable);
+            MyLog.logEvent("Sākam INNER RDP failu ielādi..");
+            getConTableInfo(getInnerConPath(), innerConTable);
+            MyLog.logSuccess("INNER RDP faili ielādēti!");
         }
 
         if(!outerConnectionPathTextField.getText().isEmpty()) {
-            connectionTableLinks(getOuterConPath(), outerConTable);
+            MyLog.logEvent("Sākam OUTER RDP failu ielādi..");
+            getConTableInfo(getOuterConPath(), outerConTable);
+            MyLog.logSuccess("OUTER RDP faili ielādēti!");
         }
     }
     
@@ -654,8 +655,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call disable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
+                        MyLog.logEvent(cmd, canLogCommands());
                         execCmd(cmd);
                     } else {
                         setInnerButtonColor(true);
@@ -663,8 +663,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call enable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
+                        MyLog.logEvent(cmd, canLogCommands());
                         execCmd(cmd);
                     }
                     
@@ -690,8 +689,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call disable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
+                        MyLog.logEvent(cmd, canLogCommands());
                         execCmd(cmd);
                     } else {
                         setOuterButtonColor(true);
@@ -699,8 +697,7 @@ public class Application extends javax.swing.JFrame {
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getOuterAdapterIndex() 
                                 + " call enable";
-                        if (logCommands.isSelected())
-                            MyLog.logEvent(cmd);
+                        MyLog.logEvent(cmd, canLogCommands());
                         execCmd(cmd);
                     }
 
@@ -731,6 +728,12 @@ public class Application extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         adapterJTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
+        innerConMainPanel = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        innerConTable = new javax.swing.JTable();
+        outerConMainPanel = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        outerConTable = new javax.swing.JTable();
         settingsJPanel = new javax.swing.JPanel();
         jButton2 = new javax.swing.JButton();
         logPanel = new javax.swing.JPanel();
@@ -747,15 +750,6 @@ public class Application extends javax.swing.JFrame {
         outerAdapterNameTextField = new javax.swing.JTextField();
         outerConnectionPathTextField = new javax.swing.JTextField();
         autoProxyCheckBox = new javax.swing.JCheckBox();
-        logJPanel = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        logJTextArea = new javax.swing.JTextArea();
-        innerConMainPanel = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        innerConTable = new javax.swing.JTable();
-        outerConMainPanel = new javax.swing.JPanel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        outerConTable = new javax.swing.JTable();
         jScrollPane5 = new javax.swing.JScrollPane();
         logTextPane = new javax.swing.JTextPane();
         proxyStatusJProgressBar = new javax.swing.JProgressBar();
@@ -871,6 +865,64 @@ public class Application extends javax.swing.JFrame {
         );
 
         mainJTabbedPanel.addTab("Network Connection", netConJPanel);
+
+        innerConTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane2.setViewportView(innerConTable);
+
+        javax.swing.GroupLayout innerConMainPanelLayout = new javax.swing.GroupLayout(innerConMainPanel);
+        innerConMainPanel.setLayout(innerConMainPanelLayout);
+        innerConMainPanelLayout.setHorizontalGroup(
+            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        innerConMainPanelLayout.setVerticalGroup(
+            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(innerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        mainJTabbedPanel.addTab("Inner Connections", innerConMainPanel);
+
+        outerConTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane4.setViewportView(outerConTable);
+
+        javax.swing.GroupLayout outerConMainPanelLayout = new javax.swing.GroupLayout(outerConMainPanel);
+        outerConMainPanel.setLayout(outerConMainPanelLayout);
+        outerConMainPanelLayout.setHorizontalGroup(
+            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        outerConMainPanelLayout.setVerticalGroup(
+            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(outerConMainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        mainJTabbedPanel.addTab("Outer Connections", outerConMainPanel);
 
         jButton2.setText("Saglabāt");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -1006,81 +1058,6 @@ public class Application extends javax.swing.JFrame {
 
         mainJTabbedPanel.addTab("Settings", settingsJPanel);
 
-        logJTextArea.setColumns(20);
-        logJTextArea.setRows(5);
-        jScrollPane1.setViewportView(logJTextArea);
-
-        javax.swing.GroupLayout logJPanelLayout = new javax.swing.GroupLayout(logJPanel);
-        logJPanel.setLayout(logJPanelLayout);
-        logJPanelLayout.setHorizontalGroup(
-            logJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 644, Short.MAX_VALUE)
-        );
-        logJPanelLayout.setVerticalGroup(
-            logJPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
-        );
-
-        mainJTabbedPanel.addTab("Log", logJPanel);
-
-        innerConTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jScrollPane2.setViewportView(innerConTable);
-
-        javax.swing.GroupLayout innerConMainPanelLayout = new javax.swing.GroupLayout(innerConMainPanel);
-        innerConMainPanel.setLayout(innerConMainPanelLayout);
-        innerConMainPanelLayout.setHorizontalGroup(
-            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(innerConMainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        innerConMainPanelLayout.setVerticalGroup(
-            innerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(innerConMainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        mainJTabbedPanel.addTab("Inner Connections", innerConMainPanel);
-
-        outerConTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jScrollPane4.setViewportView(outerConTable);
-
-        javax.swing.GroupLayout outerConMainPanelLayout = new javax.swing.GroupLayout(outerConMainPanel);
-        outerConMainPanel.setLayout(outerConMainPanelLayout);
-        outerConMainPanelLayout.setHorizontalGroup(
-            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(outerConMainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        outerConMainPanelLayout.setVerticalGroup(
-            outerConMainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(outerConMainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        mainJTabbedPanel.addTab("Outer Connections", outerConMainPanel);
-
         jScrollPane5.setViewportView(logTextPane);
 
         mainJTabbedPanel.addTab("Log", jScrollPane5);
@@ -1161,15 +1138,22 @@ public class Application extends javax.swing.JFrame {
     }//GEN-LAST:event_internalConButtonActionPerformed
 
     private void proxyStatusLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_proxyStatusLabelMouseClicked
-        try {
-            execCmd("cmd /c start inetcpl.cpl");
-        } catch (IOException ex) {
-            MyLog.logError(ex);
-        }
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    String cmd = "cmd /c start inetcpl.cpl";
+                    execCmd(cmd);
+                    MyLog.logEvent(cmd, canLogCommands());
+                } catch (IOException ex) {
+                    MyLog.logError(ex);
+                }
+            }
+        }.start();
     }//GEN-LAST:event_proxyStatusLabelMouseClicked
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        try {
+        try {                    
             appSettings.setPropValues();
             appSettings.getPropValues();
             
@@ -1177,11 +1161,9 @@ public class Application extends javax.swing.JFrame {
             setAdapters();          
             setRDPTables();
             
-        //execCmd("cmd /c start inner\\vzd.rdp");
         } catch (Exception ex) {
             if(canLogErrorStackTrace())
-                MyLog.logError(ex);
-            Logger.getLogger(Application.class.getName()).log(Level.SEVERE, null, ex);
+                MyLog.logError(ex, canLogErrorStackTrace());
         }
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -1251,7 +1233,6 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
@@ -1260,8 +1241,6 @@ public class Application extends javax.swing.JFrame {
     private javax.swing.JCheckBox logColor;
     private javax.swing.JCheckBox logCommands;
     private javax.swing.JCheckBox logErrorStackTrace;
-    private javax.swing.JPanel logJPanel;
-    private javax.swing.JTextArea logJTextArea;
     private javax.swing.JPanel logPanel;
     private javax.swing.JTextPane logTextPane;
     private javax.swing.JTabbedPane mainJTabbedPanel;

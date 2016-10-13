@@ -6,8 +6,6 @@ package application;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * @author Oleg Ryaboy, based on work by Miguel Enriquez 
@@ -42,7 +40,7 @@ public class WindowsRegistry {
             return null;
         }
         catch (Exception ex) {
-            Logger.getLogger(Application.class.getName()).log(Level.SEVERE, null, ex);
+            MyLog.logError(ex);
             return null;
         }
     }
@@ -62,8 +60,9 @@ public class WindowsRegistry {
                 while ((c = is.read()) != -1)
                     sw.write(c);
             }
-            catch (IOException e) { 
-        }
+            catch (IOException ex) { 
+                MyLog.logError(ex);
+            }
         }
 
         public String getResult() {
@@ -72,7 +71,8 @@ public class WindowsRegistry {
     }
     
     private static String execCmd(String cmd) throws IOException {
-        java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime().exec(cmd).getInputStream()).useDelimiter("\\A");
+        java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime()
+                .exec(cmd).getInputStream()).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
 }

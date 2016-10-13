@@ -30,9 +30,8 @@ public class AppSettings {
             myApp = app;
             propFilePath = new File(".").getCanonicalPath() + "\\";
         } catch (IOException ex) {
-            MyLog.logEvent("Nevarēju noteikt config faila ceļu!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);            
+            MyLog.logError("Nevarēju noteikt config faila ceļu!");
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());           
         }
     }
     
@@ -41,11 +40,10 @@ public class AppSettings {
             MyLog.logEvent("Izveidojam jaunu config failu:\n"
                     + propFilePath+propFileName);
             new File(propFilePath + propFileName).createNewFile();
-            MyLog.logEvent("Config fails izveidots!");
+            MyLog.logSuccess("Config fails izveidots!");
         } catch (IOException ex) {
-            MyLog.logEvent("Nevar izveidot failu!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);
+            MyLog.logError("Nevar izveidot failu!");
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());
         }
     }
     
@@ -54,14 +52,14 @@ public class AppSettings {
         try {
             MyLog.logEvent("Meklējam config failu...");
             inputStream = new FileInputStream(propFilePath + propFileName);
-            MyLog.logEvent("Config fails atrasts!");
+            MyLog.logSuccess("Config fails atrasts!");
             MyLog.logEvent(propFilePath + propFileName);
             
             Properties prop = new Properties();
 
             MyLog.logEvent("Sākam config faila ielādi...");
             prop.load(inputStream);
-            MyLog.logEvent("Config fails ielādēts!");
+            MyLog.logSuccess("Config fails ielādēts!");
 
             MyLog.logEvent("Sākam vērtību uzstādīšanu no faila..");
             myApp.setInnerAdapterTextField(prop.getProperty("innerAdapterName"));
@@ -73,24 +71,21 @@ public class AppSettings {
             myApp.setAutoProxy(prop.getProperty("autoProxy"));
             myApp.setInnerConPath(prop.getProperty("innerConPath"));
             myApp.setOuterConPath(prop.getProperty("outerConPath"));
-            MyLog.logEvent("Vērtību uzstādīšanu pabeigta!");
+            MyLog.logSuccess("Vērtību uzstādīšanu pabeigta!");
         } catch (FileNotFoundException ex) {
             MyLog.logError("Config fails nav atrasts!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());
             createConfigFile();
         } catch (Exception ex) {
-            MyLog.logEvent("Nevarēja ielādēt config failu!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);
+            MyLog.logError("Nevarēja ielādēt config failu!");
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());
         } finally {
             if(inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    MyLog.logEvent("Nevarēja aizvērt config failu!");
-                    if (myApp.canLogErrorStackTrace())
-                        MyLog.logError(ex);
+                    MyLog.logError("Nevarēja aizvērt config failu!");
+                    MyLog.logError(ex, myApp.canLogErrorStackTrace());
                 }
             }
         }
@@ -139,23 +134,20 @@ public class AppSettings {
                     myApp.canLogAutoProxy()));
             
             prop.store(output, null);
-            MyLog.logEvent("Config fails veiksmīgi saglabāts!");
+            MyLog.logSuccess("Config fails veiksmīgi saglabāts!");
         } catch (FileNotFoundException ex) {
-            MyLog.logEvent("Nevarēja atrast failu!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);
+            MyLog.logError("Nevarēja atrast failu!");
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());
         } catch (IOException ex) {
-            MyLog.logEvent("Radās problēmas saglabājot failu!");
-            if (myApp.canLogErrorStackTrace())
-                MyLog.logError(ex);
+            MyLog.logError("Radās problēmas saglabājot failu!");
+            MyLog.logError(ex, myApp.canLogErrorStackTrace());
         } finally {
             if (output != null) {
                 try {
                     output.close();
                 } catch (IOException ex) {
-                    MyLog.logEvent("Nevarēja aizvērt config failu!");
-                    if (myApp.canLogErrorStackTrace())
-                        MyLog.logError(ex);
+                    MyLog.logError("Nevarēja aizvērt config failu!");
+                    MyLog.logError(ex, myApp.canLogErrorStackTrace());
                 }
             }
         }

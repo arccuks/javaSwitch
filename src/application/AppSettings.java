@@ -52,8 +52,7 @@ public class AppSettings {
         try {
             MyLog.logEvent("Meklējam config failu...");
             inputStream = new FileInputStream(propFilePath + propFileName);
-            MyLog.logSuccess("Config fails atrasts!");
-            MyLog.logEvent(propFilePath + propFileName);
+            MyLog.logSuccess("Config fails atrasts!\n\t" + propFilePath + propFileName);
             
             Properties prop = new Properties();
 

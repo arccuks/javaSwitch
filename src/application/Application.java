@@ -49,9 +49,9 @@ public class Application extends javax.swing.JFrame {
         appSettings = new AppSettings(this);
         appSettings.getPropValues();
                 
-        setButtonColors();
         setAdapters();
         runRefresher();
+        setButtonColors();
         setRDPTables();
     }          
     
@@ -132,7 +132,7 @@ public class Application extends javax.swing.JFrame {
     
     protected void setInnerAdapterEnabled(boolean InnerAdapterEnabled) {
         this.innerAdapterEnabled = InnerAdapterEnabled;
-        setInnerButtonColor();
+        setInnerButtonColor(isInnerAdapterEnabled());
     }
     
     protected void setProxyEnabled (boolean proxyEnabled) {
@@ -168,27 +168,15 @@ public class Application extends javax.swing.JFrame {
     
     //<editor-fold defaultstate="collapsed" desc="BUTTON COLORS">
     private void setButtonColors(){
-        if (logColor.isSelected())
-            MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana...");
-        setInnerButtonColor();
+        MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana...", canLogColor());
+        setInnerButtonColor(isInnerAdapterEnabled());
         setOuterButtonColor();
         setProxyButtonColor();
-        if (logColor.isSelected())
-            MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana pabeigta!");
+        MyLog.logEvent("COLOR: Pogu krāsu uzstādīšana pabeigta!", canLogColor());
     }
     
     // Uzseto krasu INNER tīkla pogai
-    private void setInnerButtonColor(){
-//        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
-        if(isInnerAdapterEnabled()){
-            internalConButton.setForeground(getColorGreenOK());
-        } else {
-            internalConButton.setForeground(Color.RED);
-        }
-    }
-    // Uzseto krasu INNER tīkla pogai
     private void setInnerButtonColor(boolean isButtonPressed){
-//        MyLog.logEvent("COLOR: Iekšējās pogas krāsas maiņa...");
         if(isButtonPressed){
             internalConButton.setForeground(getColorGreenOK());
         } else {
@@ -343,14 +331,12 @@ public class Application extends javax.swing.JFrame {
     // Uzstādam sākuma adapterus
     private void setAdapters(){
         try {
-            if (logAdapter.isSelected())
-                MyLog.logEvent("ADAPTER: Adapteru uzstādīšana...");
-            String[] cmdData = 
-                    execCmd("wmic nic get name, index, NetConnectionID, netenabled")
-                            .split("\n");
-            ArrayList<String[]> tableData = new ArrayList<>();
+            MyLog.logEvent("ADAPTER: Adapteru uzstādīšana...", canLogAdapter());
+            String cmd = "wmic nic get name, index, NetConnectionID, netenabled";
+            MyLog.logEvent(cmd, canLogCommands());
             
-            createArrayListFromCmd(cmdData, tableData);
+            ArrayList<String[]> tableData = new ArrayList<>();
+            createArrayListFromCmd(execCmd(cmd).split("\n"), tableData);
 
             tableData.stream().map((data) -> {
                 // Uzstādu iekšējo adapteru
@@ -362,8 +348,7 @@ public class Application extends javax.swing.JFrame {
             }).filter((data) -> (data.length > 2 && data[2].equals(outerAdapterConnection))).forEach((data) -> {
                 outerJTextField.setText(data[0]);
             });
-            if (logAdapter.isSelected())
-                MyLog.logEvent("ADAPTER: Adapteru uzstādīšana pabeigta!");
+            MyLog.logEvent("ADAPTER: Adapteru uzstādīšana pabeigta!", canLogAdapter());
         } catch (IOException ex) {
             MyLog.logError(ex);
         }
@@ -373,11 +358,12 @@ public class Application extends javax.swing.JFrame {
     private void generateTable() {
         MyLog.logEvent("Atjauno tabulu...");
         try {
-            String[] cmdData = execCmd("wmic nic get name, index, NetConnectionID, netenabled").split("\n");
             ArrayList<String[]> tableData = new ArrayList<>();
-            
-            createArrayListFromCmd(cmdData, tableData);
-            setTableData(tableData); 
+            String cmd = "wmic nic get name, index, NetConnectionID, netenabled";
+            MyLog.logEvent(cmd,canLogCommands());            
+            createArrayListFromCmd(execCmd(cmd).split("\n"), tableData);
+            setNetworkConTableData(tableData); 
+            MyLog.logSuccess("Tabula atjaunota!");
         } catch (IOException ex) {
             MyLog.logError(ex);
         }
@@ -416,15 +402,10 @@ public class Application extends javax.swing.JFrame {
                 return;
             }
 
-            Object[][] data = new String[fileCount][];
-            for (int i = 0, a = 0; i < rdpFileNames.size(); i++) {
-                    String[] row = rdpFileNames.get(i);
-                    data[a] = row;
-                    a++;
-            }
+            Object[][] data = getDataFromArrayList(rdpFileNames, fileCount, true);
 
             table.setModel(getDefaultTableModel(data,column,false));
-            MyLog.logSuccess("RDP faili ielādēti!\n" + pathToProces);
+            MyLog.logSuccess("RDP faili ielādēti!\n\t" + pathToProces);
         } catch (Exception ex) 
         {
             MyLog.logError("Nevar atrast failus, neprecizi norādīta adrese!");
@@ -467,6 +448,7 @@ public class Application extends javax.swing.JFrame {
                 execCmd(cmd);
             }
         } catch (IOException ex) {
+            MyLog.logError("application.Application.doProxy()");
             MyLog.logError(ex);
         }
     }
@@ -603,13 +585,30 @@ public class Application extends javax.swing.JFrame {
                     cmdData[i] = cmdData[i].replace("   ", "  ");
                 } while (cmdData[i].contains("   "));
 
-                String[] test3 = cmdData[i].trim().split("  ");
-                tableData.add(test3);
+                String[] returnArray = cmdData[i].trim().split("  ");
+                tableData.add(returnArray);
             }
         }
     }
     
-    private void setTableData(ArrayList<String[]> array){
+    private Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize) {
+        return getDataFromArrayList(array, arraySize, false);
+    }
+    
+    private Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize, boolean isSpecial) {
+        Object[][] data = new String[arraySize][];
+        for (int i = 0, a = 0; i < array.size(); i++) {
+                String[] row = array.get(i);
+            
+                if (row.length > 2 || isSpecial) {
+                data[a] = row;
+                a++;
+            }
+        }
+        return data;
+    }
+    
+    private void setNetworkConTableData(ArrayList<String[]> array){
         String[] column = {"Index","NIC - nosaukums", "Adaptera nosaukums", "Status"};
         int arraySize = 0;
         
@@ -618,15 +617,8 @@ public class Application extends javax.swing.JFrame {
                 arraySize++;
         }
         
-        Object[][] data = new String[arraySize][];
-        for (int i = 0, a = 0; i < array.size(); i++) {
-                String[] row = array.get(i);
-            if (row.length > 2) {
-                data[a] = row;
-                a++;
-            }
-        }
-
+        Object[][] data = getDataFromArrayList(array, arraySize);
+        
         adapterJTable.setModel(getDefaultTableModel(data,column,true));
 
         // Salieku kolonnu platumus, tādus, kādus vēlos
@@ -645,7 +637,7 @@ public class Application extends javax.swing.JFrame {
         if(!outerConnectionPathTextField.getText().isEmpty()) {
             MyLog.logEvent("Sākam OUTER RDP failu ielādi..");
             getConTableInfo(getOuterConPath(), outerConTable);
-            MyLog.logSuccess("OUTER RDP faili ielādēti!");
+
         }
     }
     
@@ -657,7 +649,7 @@ public class Application extends javax.swing.JFrame {
                 try {
                     if(isInnerAdapterEnabled()) {
                         setInnerButtonColor(false);
-                        MyLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...");
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera izslēgšana ...", canLogAdapter());
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call disable";
@@ -665,7 +657,7 @@ public class Application extends javax.swing.JFrame {
                         execCmd(cmd);
                     } else {
                         setInnerButtonColor(true);
-                        MyLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...");
+                        MyLog.logEvent("INTERNAL: Iekšējā adaptera startēšana ...", canLogAdapter());
                         String cmd = "cmd /c start wmic path win32_networkadapter "
                                 + "where index=" + getInternalAdapterIndex() 
                                 + " call enable";

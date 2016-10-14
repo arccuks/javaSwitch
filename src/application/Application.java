@@ -402,27 +402,34 @@ public class Application extends javax.swing.JFrame {
     }
     
     private void getConTableInfo(String pathToProces,JTable table) {
-        fileCount = 0;
-        
-        File f = new File(pathToProces); 
-        String[] column = {"File Name"};
-        ArrayList<String[]> rdpFileNames = new ArrayList<>();
-        
-        crawl(f, fileCount, rdpFileNames);
-        
-        if(fileCount == 0) {
-            MyLog.logError("Norādītajā mapē nav neviena rdp faila");
-            return;
+        try {
+            fileCount = 0;
+
+            File f = new File(pathToProces); 
+            String[] column = {"File Name"};
+            ArrayList<String[]> rdpFileNames = new ArrayList<>();
+
+            crawl(f, fileCount, rdpFileNames);
+
+            if(fileCount == 0) {
+                MyLog.logError("Norādītajā mapē nav neviena rdp faila");
+                return;
+            }
+
+            Object[][] data = new String[fileCount][];
+            for (int i = 0, a = 0; i < rdpFileNames.size(); i++) {
+                    String[] row = rdpFileNames.get(i);
+                    data[a] = row;
+                    a++;
+            }
+
+            table.setModel(getDefaultTableModel(data,column,false));
+            MyLog.logSuccess("RDP faili ielādēti!\n" + pathToProces);
+        } catch (Exception ex) 
+        {
+            MyLog.logError("Nevar atrast failus, neprecizi norādīta adrese!");
+            MyLog.logError(ex, canLogErrorStackTrace());
         }
-        
-        Object[][] data = new String[fileCount][];
-        for (int i = 0, a = 0; i < rdpFileNames.size(); i++) {
-                String[] row = rdpFileNames.get(i);
-                data[a] = row;
-                a++;
-        }
-        
-        table.setModel(getDefaultTableModel(data,column,false));
     }
     
     private DefaultTableModel getDefaultTableModel(Object[][] data, String[] columns,Boolean editable) {
@@ -633,7 +640,6 @@ public class Application extends javax.swing.JFrame {
         if(!innerConnectionPathTextField.getText().isEmpty()) {
             MyLog.logEvent("Sākam INNER RDP failu ielādi..");
             getConTableInfo(getInnerConPath(), innerConTable);
-            MyLog.logSuccess("INNER RDP faili ielādēti!");
         }
 
         if(!outerConnectionPathTextField.getText().isEmpty()) {

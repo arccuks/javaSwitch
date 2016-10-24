@@ -30,6 +30,10 @@ public final class MyLog {
         private static JTextPane logTextArea;   
         private static final DateFormat DATE_FORMAT = 
                 new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        
+        public static Color getSuccessColor(){
+            return Color.decode("#017701");
+        }
 
         public static void logEvent(String message) {
             logEvent(message, true);
@@ -44,7 +48,7 @@ public final class MyLog {
         }
         
         public static void logSuccess(String message, Boolean canAdd) {
-            if(canAdd)appendToPane(logTextArea,"[" + getDate() + "] " + message + "\n", Color.decode("#017701"));
+            if(canAdd)appendToPane(logTextArea,"[" + getDate() + "] " + message + "\n", getSuccessColor());
         }
 
         public static void logError(String message) {

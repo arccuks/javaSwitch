@@ -52,15 +52,10 @@ public class AppSettings {
         try {
             MyLog.logEvent("Meklējam config failu...");
             inputStream = new FileInputStream(propFilePath + propFileName);
-            MyLog.logSuccess("Config fails atrasts!\n\t" + propFilePath + propFileName);
-            
             Properties prop = new Properties();
 
             MyLog.logEvent("Sākam config faila ielādi...");
             prop.load(inputStream);
-            MyLog.logSuccess("Config fails ielādēts!");
-
-            MyLog.logEvent("Sākam vērtību uzstādīšanu no faila..");
             myApp.setInnerAdapterTextField(prop.getProperty("innerAdapterName"));
             myApp.setOuterAdapterTextField(prop.getProperty("outerAdapterName"));
             myApp.setLogErrorStackTrace(prop.getProperty("logErrorStackTrace"));
@@ -70,7 +65,7 @@ public class AppSettings {
             myApp.setAutoProxy(prop.getProperty("autoProxy"));
             myApp.setInnerConPath(prop.getProperty("innerConPath"));
             myApp.setOuterConPath(prop.getProperty("outerConPath"));
-            MyLog.logSuccess("Vērtību uzstādīšanu pabeigta!");
+            MyLog.logSuccess("Config faila ielāde pabeigta!");
         } catch (FileNotFoundException ex) {
             MyLog.logError("Config fails nav atrasts!");
             MyLog.logError(ex, myApp.canLogErrorStackTrace());
@@ -102,12 +97,12 @@ public class AppSettings {
             
             prop.setProperty("innerAdapterName", (
                     (myApp.getInnerAdapterTextField().isEmpty()) ? 
-                            myApp.innerAdapterConnection :
+                            myApp.getInnerAdapter().getNetworkAdapterName() :
                             myApp.getInnerAdapterTextField()
                     ));
             prop.setProperty("outerAdapterName", (
                     (myApp.getOuterAdapterTextField().isEmpty()) ? 
-                            myApp.outerAdapterConnection :
+                            myApp.getOuterAdapter().getNetworkAdapterName() :
                             myApp.getOuterAdapterTextField()
                     ));
             prop.setProperty("innerConPath", (
@@ -130,7 +125,7 @@ public class AppSettings {
             prop.setProperty("logAdapter",String.valueOf(
                     myApp.canLogAdapter()));
             prop.setProperty("autoProxy",String.valueOf(
-                    myApp.canLogAutoProxy()));
+                    myApp.autoProxy()));
             
             prop.store(output, null);
             MyLog.logSuccess("Config fails veiksmīgi saglabāts!");

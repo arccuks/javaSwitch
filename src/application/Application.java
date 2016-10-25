@@ -29,7 +29,12 @@ public class Application extends javax.swing.JFrame {
     private static MyLog myLog;
     private final NetworkAdapter innerAdapter = new NetworkAdapter();
     private final NetworkAdapter outerAdapter = new NetworkAdapter();
-    private int fileCount = 0;
+    
+    private final RDCTable innerRDPTable = new RDCTable();
+    private final RDCTable outerRDPTable = new RDCTable();
+    private final Table adapterTable = new Table();
+    
+//    private int fileCount = 0;
     
     private final String innerJPanelName = "Inner Connections";
     private final String outerJPanelName = "Outer Connections";
@@ -41,6 +46,9 @@ public class Application extends javax.swing.JFrame {
         myLog = new MyLog(logTextPane);
         innerAdapter.setNetworkAdapterName("Local Area Connection");
         outerAdapter.setNetworkAdapterName("Wireless Network Connection");
+        innerRDPTable.setColumn("File Name",",");
+        outerRDPTable.setColumn("File Name",",");
+        adapterTable.setColumn("Index,NIC - nosaukums,Adaptera nosaukums,Status",",");
         
         initComponentsLocal();
        
@@ -188,7 +196,7 @@ public class Application extends javax.swing.JFrame {
     // Uzseto krasu PROXY tīkla pogai
     private void setProxyButtonColor(){
 //        MyLog.logEvent("COLOR: Proxy pogas krāsas maiņa...");
-        if(Proxy.getProxyStatus()){
+        if(Proxy.isProxyEnabled()){
             proxyButton.setForeground(getColorGreenOK());
         } else {
             proxyButton.setForeground(Color.RED);
@@ -286,58 +294,7 @@ public class Application extends javax.swing.JFrame {
         }
     }
     
-    private void crawl(File f, ArrayList<String[]> rdpFileNames) {
-//        System.out.println(FilenameUtils.getExtension(f.getAbsolutePath()));
-        if (f.isDirectory()) {
-        	File[] subFiles = f.listFiles();
-            for (File subFile : subFiles) {
-                crawl(subFile, rdpFileNames);
-            }
-        } else {
-            if(FilenameUtils.getExtension(f.getAbsolutePath())
-                    .toLowerCase()
-                    .equals("rdp")) {
-                String[] add = {f.getName()};
-                rdpFileNames.add(add);
-                this.fileCount++;
-            }
-        }
-    }
     
-    private void getConTableInfo(String pathToProces,JTable table) {
-        try {
-            fileCount = 0;
-
-            File f = new File(pathToProces); 
-            String[] column = {"File Name"};
-            ArrayList<String[]> rdpFileNames = new ArrayList<>();
-
-            crawl(f, rdpFileNames);
-
-            if(fileCount == 0) {
-                MyLog.logError("Norādītajā mapē nav neviena rdp faila");
-                return;
-            }
-
-            Object[][] data = getDataFromArrayList(rdpFileNames, fileCount, true);
-
-            table.setModel(getDefaultTableModel(data,column,false));
-            MyLog.logSuccess("RDP faili ielādēti!\n\t" + pathToProces);
-        } catch (Exception ex) 
-        {
-            MyLog.logError("Nevar atrast failus, neprecizi norādīta adrese!");
-            MyLog.logError(ex, canLogErrorStackTrace());
-        }
-    }
-    
-    private DefaultTableModel getDefaultTableModel(Object[][] data, String[] columns,Boolean editable) {
-        return new DefaultTableModel(data ,columns) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return editable;
-            }
-        };
-    }
     
     // @TODO so mosh var parsaukt/parstradat
     // lai varetu lietot automatisko pogu
@@ -345,16 +302,16 @@ public class Application extends javax.swing.JFrame {
         try {
             // Ja ir ieslēgts proxy serveris
             proxyStatusJProgressBar.setIndeterminate(true);
-            if (Proxy.getProxyStatus()) {
+            if (Proxy.isProxyEnabled()) {
                 setProxyButtonColor(false);
                 MyLog.logEvent("PROXY: Izslēgt Proxy...");
-                Proxy.disableProxy();
+                Proxy.enableProxy(false);
 
                 // Ja ir izslēgts proxy serveris
             } else {
                 setProxyButtonColor(true);
                 MyLog.logEvent("PROXY: Ieslēgt Proxy...");
-                Proxy.enableProxy();
+                Proxy.enableProxy(true);
             }
         } catch (IOException ex) {
             MyLog.logError("application.Application.doProxy()");
@@ -366,16 +323,16 @@ public class Application extends javax.swing.JFrame {
     private void refreshProxy(){
         
         // Ja sistēmā proxy ir ON, bet programma vēl to nezin
-        if(Proxy.getProxyRealStatus()&& !Proxy.getProxyStatus()) {
-            Proxy.setProxyStatus(true);
+        if(Proxy.getProxyRealStatus()&& !Proxy.isProxyEnabled()) {
+            Proxy.setProxyEnabled(true);
             setProxyButtonColor();
             proxyStatusJProgressBar.setValue(100);
             proxyStatusJProgressBar.setIndeterminate(false);
         } 
         
         // Ja sistēmā proxy ir OFF, bet programma vēl to nezin
-        if(!Proxy.getProxyRealStatus() && Proxy.getProxyStatus()) {
-            Proxy.setProxyStatus(false);
+        if(!Proxy.getProxyRealStatus() && Proxy.isProxyEnabled()) {
+            Proxy.setProxyEnabled(false);
             setProxyButtonColor();
             proxyStatusJProgressBar.setValue(0);
             proxyStatusJProgressBar.setIndeterminate(false);
@@ -503,25 +460,8 @@ public class Application extends javax.swing.JFrame {
         }
     }
     
-    private Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize) {
-        return getDataFromArrayList(array, arraySize, false);
-    }
-    
-    private Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize, boolean isSpecial) {
-        Object[][] data = new String[arraySize][];
-        for (int i = 0, a = 0; i < array.size(); i++) {
-                String[] row = array.get(i);
-            
-                if (row.length > 2 || isSpecial) {
-                data[a] = row;
-                a++;
-            }
-        }
-        return data;
-    }
-    
     private void setNetworkConTableData(ArrayList<String[]> array){
-        String[] column = {"Index","NIC - nosaukums", "Adaptera nosaukums", "Status"};
+        
         int arraySize = 0;
         
         for (int i = 0; i < array.size(); i++){
@@ -529,9 +469,8 @@ public class Application extends javax.swing.JFrame {
                 arraySize++;
         }
         
-        Object[][] data = getDataFromArrayList(array, arraySize);
-        
-        adapterJTable.setModel(getDefaultTableModel(data,column,true));
+        adapterTable.setRowCount(arraySize);
+        adapterTable.setTable(adapterJTable, array);
 
         // Salieku kolonnu platumus, tādus, kādus vēlos
         adapterJTable.getColumnModel().getColumn(0).setMaxWidth(40);
@@ -542,14 +481,19 @@ public class Application extends javax.swing.JFrame {
     
     private void setRDPTables() {
         if(!innerConnectionPathTextField.getText().isEmpty()) {
+            innerRDPTable.setFilePath(innerConnectionPathTextField.getText());
             MyLog.logEvent("Sākam INNER RDP failu ielādi..");
-            getConTableInfo(getInnerConPath(), innerConTable);
+            innerRDPTable.setTable(innerConTable);
+        } else {
+            MyLog.logError("Nav norādīts iekšējā tīkla RDC failu ceļš");
         }
 
         if(!outerConnectionPathTextField.getText().isEmpty()) {
+            outerRDPTable.setFilePath(outerConnectionPathTextField.getText());
             MyLog.logEvent("Sākam OUTER RDP failu ielādi..");
-            getConTableInfo(getOuterConPath(), outerConTable);
-
+            outerRDPTable.setTable(outerConTable);
+        } else {
+            MyLog.logError("Nav norādīts ārējā tīkla RDC failu ceļš");
         }
     }
     
@@ -1041,18 +985,7 @@ public class Application extends javax.swing.JFrame {
     }//GEN-LAST:event_internalConButtonActionPerformed
 
     private void proxyStatusLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_proxyStatusLabelMouseClicked
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    String cmd = "cmd /c start inetcpl.cpl";
-                    CMD.execCmd(cmd);
-                    MyLog.logEvent(cmd, canLogCommands());
-                } catch (IOException ex) {
-                    MyLog.logError(ex);
-                }
-            }
-        }.start();
+        NetworkAdapter.openInternetOptions();
     }//GEN-LAST:event_proxyStatusLabelMouseClicked
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -1091,47 +1024,11 @@ public class Application extends javax.swing.JFrame {
     }//GEN-LAST:event_outerJProgressBar1MouseClicked
 
     private void outerConTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_outerConTableMouseClicked
-        int row = outerConTable.getSelectedRow();
-        int col = outerConTable.getSelectedColumn();
-        if (row >= 0 && col >= 0) {
-
-            // Laizu jauna threda, lai CMD nenobloketu pasu Applikaciju
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        String cmd = "cmd /c start mstsc \"" + getOuterConPath() + outerConTable.getValueAt(row, col) + "\"";
-                        CMD.execCmd(cmd);
-                        MyLog.logEvent(cmd, canLogCommands());
-                    } catch (IOException ex) {
-                        MyLog.logError(ex);
-                    }
-                }
-            }.start();
-        }
+        outerRDPTable.openConnection(outerConTable);
     }//GEN-LAST:event_outerConTableMouseClicked
 
     private void innerConTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_innerConTableMouseClicked
-        int row = innerConTable.getSelectedRow();
-        int col = innerConTable.getSelectedColumn();
-        if (row >= 0 && col >= 0) {
-
-            // Laizu jauna threda, lai CMD nenobloketu pasu Applikaciju
-            new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        String cmd = "cmd /c start mstsc \"" + getInnerConPath() + innerConTable.getValueAt(row, col) + "\"";
-                        CMD.execCmd(cmd);
-                        MyLog.logEvent(cmd, canLogCommands());
-//                                    execCmd("cmd /c start mstsc inner\\vzd.rdp");
-//                                    execCmd("mstsc /v:10.219.4.218 /admin /f");
-                    } catch (IOException ex) {
-                        MyLog.logError(ex);
-                    }
-                }
-            }.start();
-        }  
+        innerRDPTable.openConnection(innerConTable);
     }//GEN-LAST:event_innerConTableMouseClicked
 
     public static void main(String args[]) {

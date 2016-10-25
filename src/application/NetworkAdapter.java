@@ -54,4 +54,19 @@ public class NetworkAdapter {
                     + "NetConnectionID, netenabled";
         return CMD.execCmd(cmd).split("\n");
     }
+    
+    public static void openInternetOptions() {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    String cmd = "cmd /c start inetcpl.cpl";
+                    CMD.execCmd(cmd);
+                    MyLog.logEvent(cmd, true);
+                } catch (IOException ex) {
+                    MyLog.logError(ex);
+                }
+            }
+        }.start();
+    }
 }

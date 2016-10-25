@@ -15,11 +15,11 @@ public class Proxy {
     
     private static boolean proxyEnabled;
     
-    public static void setProxyStatus(boolean status) {
+    public static void setProxyEnabled(boolean status) {
         proxyEnabled = status;
     }
     
-    public static boolean getProxyStatus(){
+    public static boolean isProxyEnabled(){
         return proxyEnabled;
     }
     
@@ -31,17 +31,10 @@ public class Proxy {
                 .equals("0x1");
     }
     
-    public static void disableProxy() throws IOException {
-        String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
-            + "\\Windows\\CurrentVersion\\Internet Settings\" /v ProxyEnable "
-            + "/t REG_DWORD /d 0 /f";
-        CMD.execCmd(cmd);
-    }
-    
-    public static void enableProxy() throws IOException {
+    public static void enableProxy(boolean enable) throws IOException {
         String cmd = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft"
                 + "\\Windows\\CurrentVersion\\Internet Settings\" "
-                + "/v ProxyEnable /t REG_DWORD /d 1 /f";
+                + "/v ProxyEnable /t REG_DWORD /d " +(enable ? "1" : "0")+ " /f";
         CMD.execCmd(cmd);
     }
 }

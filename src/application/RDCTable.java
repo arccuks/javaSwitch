@@ -32,14 +32,14 @@ public class RDCTable extends Table {
         int col = table.getSelectedColumn();
         if (row >= 0 && col >= 0) {
 
+            String cmd = "cmd /c start mstsc \"" + getFilePath() + table.getValueAt(row, col) + "\"";
             // Laizu jauna threda, lai CMD nenobloketu pasu Applikaciju
             new Thread() {
                 @Override
                 public void run() {
                     try {
-                        String cmd = "cmd /c start mstsc \"" + getFilePath() + table.getValueAt(row, col) + "\"";
                         CMD.execCmd(cmd);
-                        MyLog.logEvent(cmd, true);
+                        MyLog.logEvent(getFilePath() + table.getValueAt(row, col) + "; CLOSED");
 //                                    execCmd("cmd /c start mstsc inner\\vzd.rdp");
 //                                    execCmd("mstsc /v:10.219.4.218 /admin /f");
                     } catch (IOException ex) {
@@ -47,10 +47,11 @@ public class RDCTable extends Table {
                     }
                 }
             }.start();
+            MyLog.logEvent(cmd, true);
         }  
     }
     
-    public void setTable(JTable table) {
+    public void setJTable(JTable table) {
         try {
             setRowCount(0);
 

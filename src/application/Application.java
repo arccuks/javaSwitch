@@ -32,7 +32,7 @@ public class Application extends javax.swing.JFrame {
     
     private final RDCTable innerRDPTable = new RDCTable();
     private final RDCTable outerRDPTable = new RDCTable();
-    private final Table adapterTable = new Table();
+    private final Table networkAdapterTable = new Table();
     
 //    private int fileCount = 0;
     
@@ -48,7 +48,7 @@ public class Application extends javax.swing.JFrame {
         outerAdapter.setNetworkAdapterName("Wireless Network Connection");
         innerRDPTable.setColumn("File Name",",");
         outerRDPTable.setColumn("File Name",",");
-        adapterTable.setColumn("Index,NIC - nosaukums,Adaptera nosaukums,Status",",");
+        networkAdapterTable.setColumn("Index,NIC - nosaukums,Adaptera nosaukums,Status",",");
         
         initComponentsLocal();
        
@@ -282,18 +282,33 @@ public class Application extends javax.swing.JFrame {
     }
     
     // Izveido tabulu ar datiem no WMIC vaicājuma
-    private void generateTable() {
+    private void setNetworkAdapterTable() {
         MyLog.logEvent("Atjauno tabulu...");
         try {
             ArrayList<String[]> tableData = new ArrayList<>();           
             createArrayListFromCmd(NetworkAdapter.getAdapterStatus(), tableData);
-            setNetworkConTableData(tableData); 
+            
+            int arraySize = 0;
+        
+            for (int i = 0; i < tableData.size(); i++){
+                if(tableData.get(i).length > 2)
+                    arraySize++;
+            }
+
+            networkAdapterTable.setRowCount(arraySize);
+            networkAdapterTable.setJTable(adapterJTable, tableData);
+
+            // Salieku kolonnu platumus, tādus, kādus vēlos
+            adapterJTable.getColumnModel().getColumn(0).setMaxWidth(40);
+            adapterJTable.getColumnModel().getColumn(2).setMaxWidth(200);
+            adapterJTable.getColumnModel().getColumn(2).setMinWidth(180);
+            adapterJTable.getColumnModel().getColumn(3).setMaxWidth(50);
+            
             MyLog.logSuccess("Tabula atjaunota!");
         } catch (IOException ex) {
             MyLog.logError(ex);
         }
     }
-    
     
     
     // @TODO so mosh var parsaukt/parstradat
@@ -353,7 +368,7 @@ public class Application extends javax.swing.JFrame {
                     || data[0].equals(outerAdapter.getNetworkAdapterIndex())))).map((data) -> {
                         // Iekšējā tīkla adaptera pārbaude
                         // Pārbaudu vai salīdzināmais adapters ir aktīvais INNER
-                        // adapters, kā arī pārbaudu vai ir jāvec update uz StrinGrida
+                        // adapters, kā arī pārbaudu vai ir jāvec update uz StringGrida
                         if (data[0].equals(innerAdapter.getNetworkAdapterIndex()) && data[3]
                                 .equals("TRUE") && !innerAdapter.isAdapterEnabled()){
                             internalJProgressBar1.setIndeterminate(false);
@@ -362,8 +377,7 @@ public class Application extends javax.swing.JFrame {
                             mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(innerJPanelName), true);
                             innerConTable.setEnabled(true);
                             MyLog.logEvent("INNER: Iekšējais tīkls tiek ieslēgts..");
-                            generateTable();
-                            
+                            setNetworkAdapterTable();
                         }
                 return data;
             }).map((data) -> {
@@ -378,7 +392,7 @@ public class Application extends javax.swing.JFrame {
                     mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(innerJPanelName), false);
                     innerConTable.setEnabled(false);
                     MyLog.logEvent("INNER: Iekšējais tīkls tiek izslēgts..");
-                    generateTable();
+                    setNetworkAdapterTable();
                 }
                 return data;
             }).map((data) -> {
@@ -394,7 +408,7 @@ public class Application extends javax.swing.JFrame {
                     mainJTabbedPanel.setEnabledAt(mainJTabbedPanel.indexOfTab(outerJPanelName), true);
                     outerConTable.setEnabled(true);
                     MyLog.logEvent("OUTER: Ārējais tīkls tiek ieslēgts..");
-                    generateTable();
+                    setNetworkAdapterTable();
                 }
                 
                 //Pārbaudu vai salīdzināmais adapters ir aktīvais OUTER adapters,
@@ -412,7 +426,7 @@ public class Application extends javax.swing.JFrame {
                 return _item;
             }).forEach((_item) -> {
                 MyLog.logEvent("OUTER: Ārējais tīkls tiek izslēgts..");
-                generateTable();
+                setNetworkAdapterTable();
             });
             
             tableData.clear();
@@ -443,47 +457,28 @@ public class Application extends javax.swing.JFrame {
             }, 0, 1, TimeUnit.SECONDS);
     }
     
-    private void createArrayListFromCmd(String[] cmdData, ArrayList<String[]> tableData){
-        for (int i = 1; i <= cmdData.length - 1; i++) {
+    private void createArrayListFromCmd(String[] cmdResponse, ArrayList<String[]> tableData){
+        for (int i = 1; i <= cmdResponse.length - 1; i++) {
             do {
-                cmdData[i] = cmdData[i].replace("\r", "");
-            } while (cmdData[i].contains("\r"));
+                cmdResponse[i] = cmdResponse[i].replace("\r", "");
+            } while (cmdResponse[i].contains("\r"));
 
-            if (cmdData[i].contains("  ")) {
+            if (cmdResponse[i].contains("  ")) {
                 do {
-                    cmdData[i] = cmdData[i].replace("   ", "  ");
-                } while (cmdData[i].contains("   "));
+                    cmdResponse[i] = cmdResponse[i].replace("   ", "  ");
+                } while (cmdResponse[i].contains("   "));
 
-                String[] returnArray = cmdData[i].trim().split("  ");
+                String[] returnArray = cmdResponse[i].trim().split("  ");
                 tableData.add(returnArray);
             }
         }
-    }
-    
-    private void setNetworkConTableData(ArrayList<String[]> array){
-        
-        int arraySize = 0;
-        
-        for (int i = 0; i < array.size(); i++){
-            if(array.get(i).length > 2)
-                arraySize++;
-        }
-        
-        adapterTable.setRowCount(arraySize);
-        adapterTable.setTable(adapterJTable, array);
-
-        // Salieku kolonnu platumus, tādus, kādus vēlos
-        adapterJTable.getColumnModel().getColumn(0).setMaxWidth(40);
-        adapterJTable.getColumnModel().getColumn(2).setMaxWidth(200);
-        adapterJTable.getColumnModel().getColumn(2).setMinWidth(180);
-        adapterJTable.getColumnModel().getColumn(3).setMaxWidth(50);
     }
     
     private void setRDPTables() {
         if(!innerConnectionPathTextField.getText().isEmpty()) {
             innerRDPTable.setFilePath(innerConnectionPathTextField.getText());
             MyLog.logEvent("Sākam INNER RDP failu ielādi..");
-            innerRDPTable.setTable(innerConTable);
+            innerRDPTable.setJTable(innerConTable);
         } else {
             MyLog.logError("Nav norādīts iekšējā tīkla RDC failu ceļš");
         }
@@ -491,7 +486,7 @@ public class Application extends javax.swing.JFrame {
         if(!outerConnectionPathTextField.getText().isEmpty()) {
             outerRDPTable.setFilePath(outerConnectionPathTextField.getText());
             MyLog.logEvent("Sākam OUTER RDP failu ielādi..");
-            outerRDPTable.setTable(outerConTable);
+            outerRDPTable.setJTable(outerConTable);
         } else {
             MyLog.logError("Nav norādīts ārējā tīkla RDC failu ceļš");
         }
@@ -1004,7 +999,7 @@ public class Application extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        generateTable();
+        setNetworkAdapterTable();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void autoProxyCheckBoxStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_autoProxyCheckBoxStateChanged

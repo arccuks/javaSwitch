@@ -4,8 +4,6 @@
 package application;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 
 /**
  * @author Oleg Ryaboy, based on work by Miguel Enriquez 
@@ -45,31 +43,6 @@ public class WindowsRegistry {
         }
     }
 
-    static class StreamReader extends Thread {
-        private InputStream is;
-        private StringWriter sw= new StringWriter();
-
-        public StreamReader(InputStream is) {
-            this.is = is;
-        }
-
-        @Override
-        public void run() {
-            try {
-                int c;
-                while ((c = is.read()) != -1)
-                    sw.write(c);
-            }
-            catch (IOException ex) { 
-                MyLog.logError(ex);
-            }
-        }
-
-        public String getResult() {
-            return sw.toString();
-        }
-    }
-    
     private static String execCmd(String cmd) throws IOException {
         java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime()
                 .exec(cmd).getInputStream()).useDelimiter("\\A");

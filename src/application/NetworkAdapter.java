@@ -42,7 +42,7 @@ public class NetworkAdapter {
     
     public void enableAdapter(boolean enable) throws IOException {
         String cmd = "cmd /c start wmic path win32_networkadapter "
-            + "where index=" + networkAdapterIndex
+            + "where index=" + getNetworkAdapterIndex()
             + " call " + (enable ? "enable" : "disable");
         CMD.execCmd(cmd);
     }    

@@ -38,21 +38,21 @@ public class Table {
         return this.column;
     }
     
-    public void setTable(JTable table, ArrayList dataList) {
+    public void setJTable(JTable table, ArrayList dataList) {
         Object[][] data = getDataFromArrayList(dataList, getRowCount());
-        table.setModel(getDefaultTableModel(data, getColumn(), Boolean.TRUE));
+        table.setModel(getDefaultTableModel(data, getColumn(), true));
     }
     
     protected Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize) {
         return getDataFromArrayList(array, arraySize, false);
     }
     
-    protected Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize, boolean isSpecial) {
+    protected Object[][] getDataFromArrayList(ArrayList<String[]> array,int arraySize, boolean getAllData) {
         Object[][] data = new String[arraySize][];
         for (int i = 0, a = 0; i < array.size(); i++) {
             String[] row = array.get(i);
             
-            if (row.length > 2 || isSpecial) {
+            if (row.length > 2 || getAllData) {
                 data[a] = row;
                 a++;
             }
